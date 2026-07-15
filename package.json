@@ -1,0 +1,27 @@
+{
+  "name": "mobile-codex-bridge",
+  "version": "0.15.0",
+  "private": true,
+  "type": "module",
+  "description": "Secure phone-to-Codex task bridge",
+  "author": "ploverYang",
+  "license": "MIT",
+  "homepage": "https://github.com/ploverYang/mobile-codex-bridge#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ploverYang/mobile-codex-bridge.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bridge/cli.mjs serve",
+    "daemon:start": "node bridge/cli.mjs start",
+    "stop": "node bridge/cli.mjs stop",
+    "status": "node bridge/cli.mjs status",
+    "pair": "node bridge/cli.mjs pair",
+    "doctor": "node bridge/cli.mjs doctor",
+    "self-test": "node bridge/cli.mjs self-test",
+    "test": "node --test"
+  }
+}

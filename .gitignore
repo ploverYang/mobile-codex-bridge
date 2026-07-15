@@ -1,0 +1,9 @@
+config.local.json
+config.*.local.json
+data/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

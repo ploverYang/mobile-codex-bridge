@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ploverYang/mobile-codex-bridge/blob/main/config.schema.json",
+  "title": "Mobile Codex Bridge configuration",
+  "type": "object",
+  "required": ["projects"],
+  "properties": {
+    "server": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string", "default": "127.0.0.1" },
+        "port": { "type": "integer", "minimum": 1024, "maximum": 65535, "default": 3847 },
+        "publicBaseUrl": { "type": "string", "default": "" }
+      },
+      "additionalProperties": false
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "path"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9-]{0,63}$" },
+          "name": { "type": "string", "minLength": 1 },
+          "path": { "type": "string", "minLength": 1 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "codex": {
+      "type": "object",
+      "properties": {
+        "binary": { "type": "string", "default": "codex" },
+        "model": { "type": ["string", "null"], "default": null }
+      },
+      "additionalProperties": false
+    },
+    "desktop": {
+      "type": "object",
+      "properties": {
+        "autoOpen": { "enum": ["never", "on-start", "on-complete"], "default": "on-complete" }
+      },
+      "additionalProperties": false
+    },
+    "security": {
+      "type": "object",
+      "properties": {
+        "pairingTtlMinutes": { "type": "integer", "minimum": 1, "maximum": 525600, "default": 10080 },
+        "sessionTtlDays": { "type": "integer", "minimum": 1, "maximum": 365, "default": 30 },
+        "maxPromptChars": { "type": "integer", "minimum": 100, "maximum": 100000, "default": 12000 },
+        "rateLimitPerMinute": { "type": "integer", "minimum": 5, "maximum": 600, "default": 30 }
+      },
+      "additionalProperties": false
+    },
+    "storage": {
+      "type": "object",
+      "properties": {
+        "persistTaskHistory": { "type": "boolean", "default": true },
+        "persistOutputs": { "type": "boolean", "default": false },
+        "maxTasks": { "type": "integer", "minimum": 10, "maximum": 1000, "default": 100 }
+      },
+      "additionalProperties": false
+    },
+    "wechat": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "tokenEnv": { "type": "string", "default": "WECHAT_BRIDGE_TOKEN" },
+        "defaultProjectId": { "type": "string" },
+        "routePrefix": { "type": "string", "minLength": 1, "maxLength": 1, "default": "#" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

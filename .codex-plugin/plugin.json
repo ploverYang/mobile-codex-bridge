@@ -1,0 +1,38 @@
+{
+  "name": "mobile-codex-bridge",
+  "version": "0.15.0+codex.20260715082615",
+  "description": "Create and monitor local Codex tasks from a paired phone without signing in to ChatGPT on the phone.",
+  "author": {
+    "name": "ploverYang",
+    "url": "https://github.com/ploverYang"
+  },
+  "homepage": "https://github.com/ploverYang/mobile-codex-bridge#readme",
+  "repository": "https://github.com/ploverYang/mobile-codex-bridge",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "mobile",
+    "pwa",
+    "bridge",
+    "windows"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "\u624b\u673a\u9065\u63a7 Codex",
+    "shortDescription": "\u7528\u624b\u673a\u8bed\u97f3\u65b0\u5efa\u3001\u7eed\u804a\u548c\u7ba1\u7406\u672c\u673a Codex \u4efb\u52a1\u3002",
+    "longDescription": "\u5728\u7535\u8111\u4e0a\u8fd0\u884c\u672c\u5730\u6865\u63a5\u670d\u52a1\uff0c\u901a\u8fc7\u914d\u5bf9\u540e\u7684\u624b\u673a PWA \u6216\u5fae\u4fe1\u516c\u4f17\u53f7\u56de\u8c03\u521b\u5efa Codex \u4efb\u52a1\u3002\u624b\u673a\u65e0\u9700\u767b\u5f55 ChatGPT\uff0c\u53ef\u67e5\u770b\u6301\u4e45\u5316\u5386\u53f2\u3001\u7ee7\u7eed\u540c\u4e00\u7ebf\u7a0b\u3001\u4e2d\u65ad\u6216\u5f52\u6863\u4efb\u52a1\uff1b\u624b\u673a\u4efb\u52a1\u9ed8\u8ba4\u4f7f\u7528\u5b8c\u5168\u8bbf\u95ee\u548c\u514d\u5ba1\u6279\u7b56\u7565\uff0c\u5e76\u7ee7\u7eed\u4f7f\u7528\u7535\u8111\u4e0a\u7684 Codex \u767b\u5f55\u6001\u3001\u4ee3\u7406\u548c\u9879\u76ee\u6587\u4ef6\u3002",
+    "developerName": "ploverYang",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "\u542f\u52a8\u624b\u673a Codex \u6865\u63a5\u5e76\u751f\u6210\u4e00\u6b21\u6027\u914d\u5bf9\u7801\u3002",
+      "\u68c0\u67e5\u624b\u673a\u6865\u63a5\u670d\u52a1\u72b6\u6001\u548c\u6700\u8fd1\u9519\u8bef\u3002",
+      "\u5e2e\u6211\u914d\u7f6e\u4e00\u4e2a\u53ef\u4ece\u624b\u673a\u521b\u5efa\u4efb\u52a1\u7684\u9879\u76ee\u3002"
+    ],
+    "brandColor": "#B8F34A",
+    "websiteURL": "https://github.com/ploverYang/mobile-codex-bridge"
+  }
+}

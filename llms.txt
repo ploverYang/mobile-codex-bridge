@@ -1,0 +1,9 @@
+# Mobile Codex Bridge
+
+- Human quick start: README.md
+- AI installation contract: AGENTS.md
+- Deterministic AI setup and diagnostics: docs/AI_SETUP.md
+- Troubleshooting: docs/TROUBLESHOOTING.md
+- Security boundaries: SECURITY.md
+- Development and release rules: docs/DEVELOPMENT.md
+- Configuration schema: config.schema.json

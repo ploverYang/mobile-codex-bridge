@@ -1,0 +1,38 @@
+{
+  "server": {
+    "host": "127.0.0.1",
+    "port": 3847,
+    "publicBaseUrl": ""
+  },
+  "projects": [
+    {
+      "id": "my-project",
+      "name": "我的项目",
+      "path": "D:/path/to/project"
+    }
+  ],
+  "codex": {
+    "binary": "codex",
+    "model": null
+  },
+  "desktop": {
+    "autoOpen": "on-complete"
+  },
+  "security": {
+    "pairingTtlMinutes": 10080,
+    "sessionTtlDays": 30,
+    "maxPromptChars": 12000,
+    "rateLimitPerMinute": 30
+  },
+  "storage": {
+    "persistTaskHistory": true,
+    "persistOutputs": false,
+    "maxTasks": 100
+  },
+  "wechat": {
+    "enabled": false,
+    "tokenEnv": "WECHAT_BRIDGE_TOKEN",
+    "defaultProjectId": "my-project",
+    "routePrefix": "#"
+  }
+}

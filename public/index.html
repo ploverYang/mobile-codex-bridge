@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#11130f" />
+    <meta name="description" content="从配对手机创建本机 Codex 任务" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+    <title>手机遥控 Codex</title>
+  </head>
+  <body>
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <main class="shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="手机遥控 Codex 首页">
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>CODEX / RELAY</span>
+        </a>
+        <div class="connection" id="connection-state" role="status">
+          <span class="signal-dot"></span>
+          <span id="connection-label">连接中</span>
+        </div>
+        <div class="mobile-header-actions">
+          <button type="button" data-view-target="tasks" aria-label="打开任务历史">
+            <span class="history-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
+            <small id="active-task-count" hidden></small>
+          </button>
+          <button type="button" id="new-task-button" aria-label="开始新任务" title="开始新任务">
+            <span aria-hidden="true">＋</span>
+          </button>
+        </div>
+      </header>
+
+      <section class="pair-panel panel" id="pair-panel">
+        <div class="eyebrow">私人链路 · 首次配对</div>
+        <h1>让声音落到<br />你的电脑里。</h1>
+        <p class="lede">在电脑端运行 <code>npm run pair</code>，把显示的 6 位一次性配对码填在这里。配对码默认 7 天有效，成功使用后立即失效；手机无需登录 ChatGPT。</p>
+        <form id="pair-form" class="pair-form">
+          <label for="pair-code">一次性配对码</label>
+          <input
+            id="pair-code"
+            name="pair-code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            maxlength="6"
+            pattern="[0-9]{6}"
+            placeholder="000 000"
+            required
+          />
+          <label for="device-name">设备名称</label>
+          <input id="device-name" name="device-name" type="text" maxlength="80" value="我的手机" />
+          <button class="primary-action" type="submit">
+            <span>建立安全连接</span><b aria-hidden="true">↗</b>
+          </button>
+        </form>
+        <p class="form-message" id="pair-message" role="alert"></p>
+        <div class="privacy-note">
+          <span>01</span>
+          <p>任务在电脑端执行，沿用电脑现有的 Codex 登录、固定代理、项目文件和审批策略。</p>
+        </div>
+      </section>
+
+      <section id="app-panel" hidden>
+        <section class="status-dock panel" aria-label="连接概况">
+          <div class="status-item">
+            <span class="status-icon phone-icon" aria-hidden="true"></span>
+            <div><small>这台手机</small><strong>已安全配对</strong></div>
+          </div>
+          <div class="status-item">
+            <span class="status-icon computer-icon" aria-hidden="true"></span>
+            <div><small>电脑端</small><strong id="codex-state">Codex 在线</strong></div>
+          </div>
+          <div class="status-route">
+            <span class="route-line" aria-hidden="true"></span>
+            <small>PRIVATE RELAY</small>
+          </div>
+          <button class="text-button logout-button" id="logout" type="button">解除配对</button>
+        </section>
+
+        <div class="workspace">
+          <section class="composer panel view-panel mobile-active" data-view="compose">
+            <div class="section-heading">
+              <div>
+                <div class="eyebrow">新建任务</div>
+                <h1>交给 Codex。</h1>
+              </div>
+              <button class="icon-button" id="install-app" type="button" hidden title="安装到桌面">＋</button>
+            </div>
+
+            <form id="task-form">
+              <label class="field-label" for="project-select">目标项目</label>
+              <div class="select-wrap">
+                <select id="project-select" required></select>
+                <span aria-hidden="true">⌄</span>
+              </div>
+
+              <label class="field-label" for="prompt">任务描述</label>
+              <textarea
+                id="prompt"
+                rows="7"
+                maxlength="12000"
+                placeholder="例如：检查支付模块最近的改动，修复测试失败并说明原因。"
+                required
+              ></textarea>
+
+              <div class="input-assist">
+                <span class="keyboard-mark" aria-hidden="true">⌨</span>
+                <span>需要语音时，点击输入框后使用<strong>系统键盘麦克风</strong></span>
+              </div>
+              <p class="access-notice">本手机入口创建和续聊的任务默认完全访问电脑端项目与命令执行权限。</p>
+
+              <button class="primary-action launch" id="submit-task" type="submit">
+                <span>发送到电脑 Codex</span><b aria-hidden="true">→</b>
+              </button>
+            </form>
+            <p class="form-message" id="task-message" role="alert"></p>
+          </section>
+
+          <section class="tasks-section panel view-panel" data-view="tasks">
+            <div class="tasks-title">
+              <button class="mobile-back" type="button" data-view-target="compose" aria-label="返回新建任务">←</button>
+              <div>
+                <div class="eyebrow">任务中心</div>
+                <h2 id="tasks-heading">最近任务</h2>
+              </div>
+              <div class="tasks-summary">
+                <span id="task-count">0 条</span>
+                <button class="icon-button refresh" id="refresh-tasks" type="button" title="刷新任务" aria-label="刷新任务">↻</button>
+              </div>
+            </div>
+            <div class="task-tools">
+              <label class="task-search">
+                <span aria-hidden="true"></span>
+                <input id="task-search" type="search" placeholder="搜索任务或项目" autocomplete="off" />
+              </label>
+              <div class="filter-tabs" role="tablist" aria-label="筛选任务状态">
+                <button type="button" data-filter="all" class="active" role="tab" aria-selected="true">全部</button>
+                <button type="button" data-filter="active" role="tab" aria-selected="false">进行中</button>
+                <button type="button" data-filter="approval" role="tab" aria-selected="false">待审批</button>
+                <button type="button" data-filter="completed" role="tab" aria-selected="false">已完成</button>
+                <button type="button" data-filter="archived" role="tab" aria-selected="false">已归档</button>
+              </div>
+            </div>
+            <div class="task-list" id="task-list" aria-live="polite">
+              <div class="empty-state">
+                <span>等待第一条指令</span>
+                <p>在“新建任务”中输入要求，电脑端会创建一个真实的 Codex 任务。</p>
+              </div>
+            </div>
+            <div class="tasks-panel-footer">
+              <span>PRIVATE BRIDGE</span>
+              <span class="app-version">v—</span>
+            </div>
+          </section>
+
+          <section class="task-detail panel view-panel" data-view="detail" aria-label="任务详情">
+            <header class="detail-header">
+              <button class="detail-back" type="button" data-view-target="tasks" aria-label="返回任务中心">←</button>
+              <div class="detail-heading">
+                <span class="eyebrow" id="detail-project">任务详情</span>
+                <h2 id="detail-title">正在读取任务…</h2>
+                <div class="detail-meta">
+                  <span class="status-pill" id="detail-status">读取中</span>
+                  <span id="detail-turn-count"></span>
+                </div>
+              </div>
+              <button class="icon-button detail-refresh" id="refresh-detail" type="button" aria-label="刷新任务详情">↻</button>
+            </header>
+
+            <div class="detail-conversation" id="detail-conversation" aria-live="polite">
+              <div class="detail-loading"><i></i><span>正在读取 Codex 对话历史…</span></div>
+            </div>
+
+            <div class="detail-controls">
+              <div class="detail-quick-actions">
+                <button class="task-action" id="detail-open-desktop" type="button">电脑端打开</button>
+                <button class="task-action danger-action" id="detail-cancel" type="button" hidden>停止任务</button>
+                <button class="task-action archive-action" id="detail-archive" type="button" hidden>归档任务</button>
+              </div>
+              <form class="detail-composer" id="detail-followup-form">
+                <textarea id="detail-followup-input" rows="1" maxlength="12000" placeholder="继续追问或补充要求…"></textarea>
+                <button id="detail-followup-send" type="submit" aria-label="发送后续指令">↑</button>
+              </form>
+              <p class="detail-hint" id="detail-hint">使用系统键盘麦克风可以直接语音输入</p>
+            </div>
+
+            <div class="tasks-panel-footer detail-footer">
+              <span>CODEX CONVERSATION</span>
+              <span class="app-version">v—</span>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <footer>
+        <span>LOCAL HOST / PRIVATE BRIDGE</span>
+        <span class="app-version">v—</span>
+      </footer>
+    </main>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>
