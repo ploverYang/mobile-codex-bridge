@@ -16,10 +16,11 @@ const dataDir = path.join(pluginRoot, "data");
 const serverStatePath = path.join(dataDir, "server.json");
 const MAX_BODY_BYTES = 96 * 1024;
 
-const MIME = {
+export const MIME = {
   ".css": "text/css; charset=utf-8",
   ".html": "text/html; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8",
   ".json": "application/json; charset=utf-8",
   ".svg": "image/svg+xml",
   ".webmanifest": "application/manifest+json; charset=utf-8",
