@@ -1,3 +1,5 @@
+import { ACTIVE_STATUSES, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
+
 const $ = (selector) => document.querySelector(selector);
 const state = {
   token: localStorage.getItem("mobile-codex-token") || "",
@@ -10,6 +12,7 @@ const state = {
   detailRefreshing: false,
   detailFirstRender: true,
   installPrompt: null,
+  taskRefreshGate: new TaskRefreshGate(),
 };
 
 const STATUS = {
@@ -259,21 +262,12 @@ function taskCard(task) {
   return card;
 }
 
-const ACTIVE_STATUSES = new Set(["creating", "resuming", "running", "cancelling", "interrupted"]);
-
-function taskMatchesFilter(task) {
-  if (state.taskFilter === "active" && !ACTIVE_STATUSES.has(task.status)) return false;
-  if (state.taskFilter === "approval" && task.status !== "waiting_approval") return false;
-  if (state.taskFilter === "completed" && task.status !== "completed") return false;
-  if (state.taskFilter === "archived" && !task.archivedAt) return false;
-  if (!state.taskQuery) return true;
-  const haystack = [task.promptPreview, task.projectName, task.output, task.error].filter(Boolean).join(" ").toLocaleLowerCase("zh-CN");
-  return haystack.includes(state.taskQuery);
-}
-
 function renderTasks() {
   const list = $("#task-list");
-  const visibleTasks = state.tasks.filter(taskMatchesFilter);
+  const visibleTasks = state.tasks.filter((task) => taskMatchesFilter(task, {
+    filter: state.taskFilter,
+    query: state.taskQuery,
+  }));
   const activeCount = state.tasks.filter((task) => ACTIVE_STATUSES.has(task.status) || task.status === "waiting_approval").length;
   $("#task-count").textContent = `${state.tasks.length} 条${state.taskFilter === "archived" ? "归档" : ""}`;
   $("#tasks-heading").textContent = state.taskFilter === "archived" ? "归档历史" : "最近任务";
@@ -463,11 +457,14 @@ async function openTaskDetail(taskId) {
 
 async function refreshTasks() {
   if (!state.token || document.hidden || document.activeElement?.closest?.(".followup-form")) return;
+  const refreshRequest = state.taskRefreshGate.begin();
   try {
     const result = await api(state.taskFilter === "archived" ? "/api/tasks?archived=true" : "/api/tasks");
+    if (!state.taskRefreshGate.isCurrent(refreshRequest)) return;
     state.tasks = result.tasks;
     renderTasks();
   } catch (error) {
+    if (!state.taskRefreshGate.isCurrent(refreshRequest)) return;
     message($("#task-message"), error.message);
   }
 }
@@ -480,7 +477,13 @@ async function setTaskArchived(taskId, unarchive, button) {
   if (!window.confirm(confirmation)) return;
   button.disabled = true;
   try {
-    await api(`/api/tasks/${encodeURIComponent(taskId)}/${action}`, { method: "POST" });
+    const { task } = await api(`/api/tasks/${encodeURIComponent(taskId)}/${action}`, { method: "POST" });
+    if (unarchive && state.taskFilter !== "archived") {
+      state.tasks = [task, ...state.tasks.filter((item) => item.id !== taskId)];
+    } else {
+      state.tasks = state.tasks.filter((item) => item.id !== taskId);
+    }
+    renderTasks();
     message($("#task-message"), unarchive ? "会话已恢复到任务列表" : "会话已归档到电脑端 Codex", true);
     if (!unarchive && state.activeTaskId === taskId) {
       state.activeTaskId = null;

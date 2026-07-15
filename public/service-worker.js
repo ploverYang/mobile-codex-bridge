@@ -1,5 +1,5 @@
-const CACHE = "mobile-codex-bridge-v0.15.0";
-const SHELL = ["/", "/styles.css", "/app.js", "/manifest.webmanifest", "/icon.svg"];
+const CACHE = "mobile-codex-bridge-v0.16.0";
+const SHELL = ["/", "/styles.css", "/app.js", "/task-list-state.mjs", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SHELL)));
