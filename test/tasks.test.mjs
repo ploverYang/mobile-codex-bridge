@@ -40,6 +40,7 @@ class FakeClient extends EventEmitter {
     }
     if (method === "turn/start") return { turn: { id: `turn-${this.calls.filter((call) => call.method === "turn/start").length}` } };
     if (method === "turn/interrupt") return {};
+    if (method === "thread/archive" && this.archiveError) throw this.archiveError;
     if (method === "thread/archive" || method === "thread/unarchive") return {};
     throw new Error(`unexpected method: ${method}`);
   }
@@ -254,6 +255,56 @@ test("task manager archives and restores an inactive Codex thread", async () => 
 
   await manager.unarchive(task.id);
   assert.deepEqual(client.calls.at(-1), { method: "thread/unarchive", params: { threadId: "thread-1" } });
+  assert.equal(manager.get(task.id).archivedAt, null);
+});
+
+test("task manager archives locally when an older thread has no App Server rollout", async () => {
+  const client = new FakeClient();
+  client.archiveError = new Error("thread/archive: no rollout found for thread id old-thread");
+  const manager = new TaskManager(client, {
+    codex: { model: null },
+    projects: [{ id: "demo", name: "Demo", path: "C:/demo" }],
+    storage: { maxTasks: 100 },
+  });
+  const task = await manager.createTask({
+    project: { id: "demo", name: "Demo", path: "C:/demo" },
+    prompt: "Archive an older task",
+  });
+  client.emit("notification", {
+    method: "turn/completed",
+    params: { threadId: "thread-1", turn: { status: "completed" } },
+  });
+
+  const archived = await manager.archive(task.id);
+  assert.equal(archived.archiveSync, "local");
+  assert.equal(manager.list().length, 0);
+  assert.equal(manager.list({ archived: true }).length, 1);
+
+  const callsBeforeRestore = client.calls.length;
+  const restored = await manager.unarchive(task.id);
+  assert.equal(restored.archivedAt, null);
+  assert.equal(restored.archiveSync, null);
+  assert.equal(client.calls.length, callsBeforeRestore);
+});
+
+test("task manager preserves non-rollout archive errors", async () => {
+  const client = new FakeClient();
+  client.archiveError = new Error("thread/archive: service unavailable");
+  const manager = new TaskManager(client, {
+    codex: { model: null },
+    projects: [{ id: "demo", name: "Demo", path: "C:/demo" }],
+    storage: { maxTasks: 100 },
+  });
+  const task = await manager.createTask({
+    project: { id: "demo", name: "Demo", path: "C:/demo" },
+    prompt: "Archive failure",
+  });
+  client.emit("notification", {
+    method: "turn/completed",
+    params: { threadId: "thread-1", turn: { status: "completed" } },
+  });
+
+  await assert.rejects(manager.archive(task.id), /service unavailable/);
   assert.equal(manager.get(task.id).archivedAt, null);
 });
 

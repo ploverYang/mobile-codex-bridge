@@ -395,7 +395,9 @@ function renderTaskDetail(task) {
   $("#detail-hint").textContent = task.canFollowUp
     ? "继续追问会保留这个 Codex 线程的全部上下文"
     : task.archivedAt
-      ? "此会话已归档到电脑端 Codex 的 Archived tasks，可在此恢复。"
+      ? task.archiveSync === "local"
+        ? "此会话仅归档到手机历史；电脑端尚未同步，可在桌面端手动归档。"
+        : "此会话已归档到电脑端 Codex 的 Archived tasks，可在此恢复。"
     : task.status === "waiting_approval"
       ? "Codex 正在等待你的审批"
       : "Codex 正在执行，进度会自动更新";
@@ -473,7 +475,7 @@ async function setTaskArchived(taskId, unarchive, button) {
   const action = unarchive ? "unarchive" : "archive";
   const confirmation = unarchive
     ? "恢复这个会话？它会重新出现在手机任务中心和电脑端 Codex 任务列表。"
-    : "归档这个历史任务？会话内容会保留在电脑端 Codex 的 Archived tasks 中。";
+    : "归档这个历史任务？会话内容会保留；旧线程无法同步时将仅归档到手机历史。";
   if (!window.confirm(confirmation)) return;
   button.disabled = true;
   try {
@@ -484,7 +486,12 @@ async function setTaskArchived(taskId, unarchive, button) {
       state.tasks = state.tasks.filter((item) => item.id !== taskId);
     }
     renderTasks();
-    message($("#task-message"), unarchive ? "会话已恢复到任务列表" : "会话已归档到电脑端 Codex", true);
+    const successMessage = unarchive
+      ? "会话已恢复到任务列表"
+      : task.archiveSync === "local"
+        ? "会话已归档到手机历史；电脑端尚未同步"
+        : "会话已归档到电脑端 Codex";
+    message($("#task-message"), successMessage, true);
     if (!unarchive && state.activeTaskId === taskId) {
       state.activeTaskId = null;
       setTaskView("tasks");

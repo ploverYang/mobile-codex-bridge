@@ -15,6 +15,10 @@ const MOBILE_TURN_PERMISSIONS = {
   sandboxPolicy: { type: "dangerFullAccess" },
 };
 
+function isMissingRollout(error) {
+  return /no rollout found for thread id/i.test(String(error?.message || error));
+}
+
 function publicTask(task) {
   return {
     id: task.id,
@@ -30,6 +34,7 @@ function publicTask(task) {
     output: task.output,
     error: task.error,
     archivedAt: task.archivedAt || null,
+    archiveSync: task.archivedAt ? (task.archiveSync || "synced") : null,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
     canFollowUp: Boolean(task.threadId) && !task.archivedAt && !ACTIVE_STATUSES.has(task.status),
@@ -282,6 +287,7 @@ export class TaskManager {
       output: "",
       error: null,
       archivedAt: null,
+      archiveSync: null,
       createdAt: now,
       updatedAt: now,
       approvals: [],
@@ -391,7 +397,13 @@ export class TaskManager {
     if (!task.threadId) throw new Error("这个任务还没有 Codex 线程");
     if (ACTIVE_STATUSES.has(task.status)) throw new Error("进行中的任务不能归档");
     if (!task.archivedAt) {
-      await this.client.request("thread/archive", { threadId: task.threadId });
+      try {
+        await this.client.request("thread/archive", { threadId: task.threadId });
+        task.archiveSync = "synced";
+      } catch (error) {
+        if (!isMissingRollout(error)) throw error;
+        task.archiveSync = "local";
+      }
       task.archivedAt = Date.now();
       this.#changed(task);
     }
@@ -403,8 +415,11 @@ export class TaskManager {
     if (!task) throw new Error("任务不存在");
     if (!task.threadId) throw new Error("这个任务还没有 Codex 线程");
     if (task.archivedAt) {
-      await this.client.request("thread/unarchive", { threadId: task.threadId });
+      if (task.archiveSync !== "local") {
+        await this.client.request("thread/unarchive", { threadId: task.threadId });
+      }
       task.archivedAt = null;
+      task.archiveSync = null;
       this.#changed(task);
     }
     return publicTask(task);

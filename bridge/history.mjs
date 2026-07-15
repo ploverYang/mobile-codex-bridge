@@ -11,6 +11,7 @@ function restoredTask(task) {
     output: String(task.output || ""),
     error: status === "interrupted" ? "桥接服务曾重启，可从手机继续这个任务。" : task.error || null,
     archivedAt: Number.isFinite(Number(task.archivedAt)) ? Number(task.archivedAt) : null,
+    archiveSync: Number(task.archivedAt) ? (task.archiveSync === "local" ? "local" : "synced") : null,
     approvals: [],
     messageCount: Math.max(1, Number(task.messageCount) || 1),
   };
@@ -52,6 +53,7 @@ export class TaskHistoryStore {
         output: this.persistOutputs ? task.output : "",
         error: task.error,
         archivedAt: Number.isFinite(Number(task.archivedAt)) ? Number(task.archivedAt) : null,
+        archiveSync: task.archivedAt ? (task.archiveSync === "local" ? "local" : "synced") : null,
         createdAt: task.createdAt,
         updatedAt: task.updatedAt,
       }));

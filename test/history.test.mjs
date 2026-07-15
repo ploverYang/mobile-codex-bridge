@@ -23,6 +23,7 @@ test("task history is restored locally without persisted output", async () => {
       output: "sensitive output",
       error: null,
       archivedAt: 300,
+      archiveSync: "local",
       createdAt: 100,
       updatedAt: 200,
       approvals: [],
@@ -32,6 +33,7 @@ test("task history is restored locally without persisted output", async () => {
     assert.equal(restored.output, "");
     assert.equal(restored.messageCount, 2);
     assert.equal(restored.archivedAt, 300);
+    assert.equal(restored.archiveSync, "local");
     assert.match(restored.error, /重启/);
   } finally {
     await rm(directory, { recursive: true, force: true });
