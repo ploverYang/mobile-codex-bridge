@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { TaskRefreshGate, taskMatchesFilter } from "../public/task-list-state.mjs";
+import { shouldRefreshTaskList, TaskRefreshGate, taskMatchesFilter } from "../public/task-list-state.mjs";
 
 const activeTask = { id: "active", status: "running", archivedAt: null, promptPreview: "正在执行" };
 const completedTask = { id: "completed", status: "completed", archivedAt: null, promptPreview: "已完成" };
@@ -21,4 +21,17 @@ test("newer task refreshes prevent stale results from replacing archive state", 
 
   assert.equal(gate.isCurrent(beforeArchive), false);
   assert.equal(gate.isCurrent(afterArchive), true);
+});
+
+test("a cookie-restored session refreshes tasks without a local bearer token", () => {
+  assert.equal(shouldRefreshTaskList({
+    appVisible: true,
+    documentHidden: false,
+    followupFocused: false,
+  }), true);
+  assert.equal(shouldRefreshTaskList({
+    appVisible: false,
+    documentHidden: false,
+    followupFocused: false,
+  }), false);
 });

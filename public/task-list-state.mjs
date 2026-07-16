@@ -1,5 +1,9 @@
 export const ACTIVE_STATUSES = new Set(["creating", "resuming", "running", "cancelling", "interrupted"]);
 
+export function shouldRefreshTaskList({ appVisible, documentHidden, followupFocused }) {
+  return Boolean(appVisible && !documentHidden && !followupFocused);
+}
+
 export function taskMatchesFilter(task, { filter = "all", query = "" } = {}) {
   if (filter === "archived") {
     if (!task.archivedAt) return false;

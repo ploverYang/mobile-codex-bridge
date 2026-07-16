@@ -1,4 +1,4 @@
-import { ACTIVE_STATUSES, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
+import { ACTIVE_STATUSES, shouldRefreshTaskList, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const state = {
@@ -122,7 +122,7 @@ function clearSession(reload = true) {
 
 async function logout() {
   try {
-    if (state.token) await api("/api/session/revoke", { method: "POST" });
+    await api("/api/session/revoke", { method: "POST" });
   } catch {
     // Local removal is still required if the computer is offline.
   } finally {
@@ -467,7 +467,11 @@ async function openTaskDetail(taskId) {
 }
 
 async function refreshTasks() {
-  if (!state.token || document.hidden || document.activeElement?.closest?.(".followup-form")) return;
+  if (!shouldRefreshTaskList({
+    appVisible: !$("#app-panel").hidden,
+    documentHidden: document.hidden,
+    followupFocused: Boolean(document.activeElement?.closest?.(".followup-form")),
+  })) return;
   const refreshRequest = state.taskRefreshGate.begin();
   try {
     const result = await api(state.taskFilter === "archived" ? "/api/tasks?archived=true" : "/api/tasks");
