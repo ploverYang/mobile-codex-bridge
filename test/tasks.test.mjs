@@ -9,6 +9,7 @@ class FakeClient extends EventEmitter {
     this.calls = [];
     this.responses = [];
     this.threadReadError = null;
+    this.threadTurns = null;
   }
 
   async request(method, params) {
@@ -21,7 +22,7 @@ class FakeClient extends EventEmitter {
       thread: {
         id: "thread-1",
         preview: "Inspect the repository",
-        turns: [
+        turns: this.threadTurns || [
           {
             id: "turn-1",
             status: "completed",
@@ -195,6 +196,48 @@ test("task detail hides the transient empty-rollout error while a turn is starti
   assert.equal(detail.detailError, null);
   assert.equal(detail.turns[0].status, "running");
   assert.equal(detail.turns[0].items[0].text, "Start a task");
+});
+
+test("task detail shows an identical completed assistant response only once", async () => {
+  const client = new FakeClient();
+  client.threadTurns = [{
+    id: "turn-1",
+    status: "completed",
+    startedAt: 1,
+    completedAt: 2,
+    items: [
+      { id: "user-1", type: "userMessage", content: [{ type: "text", text: "Answer once" }] },
+      { id: "persisted-agent", type: "agentMessage", text: "One response", phase: "final_answer" },
+    ],
+  }];
+  const manager = new TaskManager(client, {
+    codex: { model: null },
+    projects: [{ id: "demo", name: "Demo", path: "C:/demo" }],
+    storage: { maxTasks: 100 },
+  });
+  const task = await manager.createTask({
+    project: { id: "demo", name: "Demo", path: "C:/demo" },
+    prompt: "Answer once",
+  });
+  client.emit("notification", {
+    method: "item/agentMessage/delta",
+    params: { threadId: "thread-1", delta: "One response" },
+  });
+  client.emit("notification", {
+    method: "turn/completed",
+    params: {
+      threadId: "thread-1",
+      turn: {
+        id: "turn-1",
+        status: "completed",
+        items: [{ id: "completed-agent", type: "agentMessage", text: "One response", phase: "final_answer" }],
+      },
+    },
+  });
+
+  const detail = await manager.getDetail(task.id);
+  assert.equal(detail.turns.length, 1);
+  assert.deepEqual(detail.turns[0].items.filter((item) => item.type === "assistant").map((item) => item.text), ["One response"]);
 });
 
 test("task manager supports manual desktop open and completion auto-open", async () => {

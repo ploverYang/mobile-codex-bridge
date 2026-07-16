@@ -31,7 +31,7 @@ async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const response = await fetch(path, { ...options, headers });
+  const response = await fetch(path, { ...options, headers, credentials: "same-origin" });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 && path !== "/api/pair") clearSession(false);
@@ -99,6 +99,15 @@ async function enterApp() {
   $("#pair-panel").hidden = true;
   $("#app-panel").hidden = false;
   await refreshTasks();
+}
+
+async function restoreSession() {
+  try {
+    await api("/api/session");
+    await enterApp();
+  } catch {
+    clearSession(false);
+  }
 }
 
 function clearSession(reload = true) {
@@ -657,4 +666,4 @@ if ("serviceWorker" in navigator) navigator.serviceWorker.register("/service-wor
 
 const codeFromUrl = new URLSearchParams(location.search).get("code");
 if (codeFromUrl) $("#pair-code").value = codeFromUrl.replace(/\D/g, "").slice(0, 6);
-if (state.token) enterApp().catch(() => clearSession(false));
+restoreSession();

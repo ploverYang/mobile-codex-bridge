@@ -44,7 +44,7 @@ export class DesktopIntegration {
     const url = codexThreadUrl(threadId);
     if (refresh) {
       await this.launcher("codex://threads/new", this.platform);
-      await this.pause(220);
+      await this.pause(600);
     }
     await this.launcher(url, this.platform);
     return { url };
@@ -58,7 +58,8 @@ export class DesktopIntegration {
     this.openedTurns.add(key);
     try {
       const previousTurn = this.lastOpenedTurn.get(task.threadId);
-      await this.openThread(task.threadId, { refresh: Boolean(previousTurn && previousTurn !== task.turnId) });
+      const laterTurn = Number(task.messageCount) > 1 || Boolean(previousTurn && previousTurn !== task.turnId);
+      await this.openThread(task.threadId, { refresh: laterTurn });
       this.lastOpenedTurn.set(task.threadId, task.turnId || "turn");
       return true;
     } catch (error) {

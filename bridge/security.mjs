@@ -3,6 +3,7 @@ import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const sha256 = (value) => createHash("sha256").update(String(value)).digest("hex");
+const SESSION_COOKIE = "mobile_codex_session";
 
 function constantTimeHexEqual(left, right) {
   const a = Buffer.from(String(left), "hex");
@@ -74,10 +75,15 @@ export class SecurityStore {
   }
 
   authorize(token) {
-    if (!token || !this.state) return false;
+    return Boolean(this.session(token));
+  }
+
+  session(token) {
+    if (!token || !this.state) return null;
     this.pruneSessions();
     const tokenHash = sha256(token);
-    return this.state.sessions.some((session) => constantTimeHexEqual(session.tokenHash, tokenHash));
+    const session = this.state.sessions.find((item) => constantTimeHexEqual(item.tokenHash, tokenHash));
+    return session ? { createdAt: session.createdAt, expiresAt: session.expiresAt } : null;
   }
 
   async revoke(token) {
@@ -104,5 +110,40 @@ export class SecurityStore {
 
 export function bearerToken(request) {
   const header = String(request.headers.authorization || "");
-  return header.startsWith("Bearer ") ? header.slice(7).trim() : "";
+  if (header.startsWith("Bearer ")) return header.slice(7).trim();
+  const cookies = String(request.headers.cookie || "").split(";");
+  for (const cookie of cookies) {
+    const separator = cookie.indexOf("=");
+    if (separator === -1 || cookie.slice(0, separator).trim() !== SESSION_COOKIE) continue;
+    try {
+      return decodeURIComponent(cookie.slice(separator + 1).trim());
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+function secureRequest(request) {
+  if (request.socket?.encrypted) return true;
+  return String(request.headers["x-forwarded-proto"] || "").split(",")[0].trim().toLowerCase() === "https";
+}
+
+export function sessionCookie(token, expiresAt, request) {
+  const maxAge = Math.max(0, Math.ceil((Number(expiresAt) - Date.now()) / 1000));
+  const attributes = [
+    `${SESSION_COOKIE}=${encodeURIComponent(token)}`,
+    "Path=/",
+    `Max-Age=${maxAge}`,
+    "HttpOnly",
+    "SameSite=Strict",
+  ];
+  if (secureRequest(request)) attributes.push("Secure");
+  return attributes.join("; ");
+}
+
+export function clearSessionCookie(request) {
+  const attributes = [`${SESSION_COOKIE}=`, "Path=/", "Max-Age=0", "HttpOnly", "SameSite=Strict"];
+  if (secureRequest(request)) attributes.push("Secure");
+  return attributes.join("; ");
 }

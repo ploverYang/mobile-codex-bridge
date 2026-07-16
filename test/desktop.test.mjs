@@ -32,12 +32,26 @@ test("desktop integration reloads an already opened thread for a later turn", as
     { autoOpen: "on-complete" },
     { platform: "win32", launcher: async (url) => urls.push(url), pause: async () => {} },
   );
-  const task = { threadId: THREAD_ID, turnId: "turn-1" };
+  const task = { threadId: THREAD_ID, turnId: "turn-1", messageCount: 1 };
   assert.equal(await desktop.maybeOpen(task, "complete"), true);
   task.turnId = "turn-2";
   assert.equal(await desktop.maybeOpen(task, "complete"), true);
   assert.deepEqual(urls, [
     `codex://threads/${THREAD_ID}`,
+    "codex://threads/new",
+    `codex://threads/${THREAD_ID}`,
+  ]);
+});
+
+test("desktop integration reloads a persisted multi-turn thread after a bridge restart", async () => {
+  const urls = [];
+  const desktop = new DesktopIntegration(
+    { autoOpen: "on-complete" },
+    { platform: "win32", launcher: async (url) => urls.push(url), pause: async () => {} },
+  );
+  const task = { threadId: THREAD_ID, turnId: "turn-2", messageCount: 2 };
+  assert.equal(await desktop.maybeOpen(task, "complete"), true);
+  assert.deepEqual(urls, [
     "codex://threads/new",
     `codex://threads/${THREAD_ID}`,
   ]);

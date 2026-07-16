@@ -6,7 +6,7 @@ import { CodexAppServerClient } from "./codex-client.mjs";
 import { loadConfig, pluginRoot } from "./config.mjs";
 import { DesktopIntegration } from "./desktop.mjs";
 import { TaskHistoryStore } from "./history.mjs";
-import { bearerToken, SecurityStore } from "./security.mjs";
+import { bearerToken, clearSessionCookie, SecurityStore, sessionCookie } from "./security.mjs";
 import { TaskManager } from "./tasks.mjs";
 import { BRIDGE_VERSION } from "./version.mjs";
 import { parseWechatXml, routeWechatText, verifyWechatSignature, wechatTextReply } from "./wechat.mjs";
@@ -37,9 +37,9 @@ function securityHeaders(response) {
   );
 }
 
-function sendJson(response, status, body) {
+function sendJson(response, status, body, headers = {}) {
   securityHeaders(response);
-  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" });
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers });
   response.end(JSON.stringify(body));
 }
 
@@ -158,6 +158,7 @@ export async function startBridge({ configPath } = {}) {
           codexReady: codex.ready,
           version: BRIDGE_VERSION,
           desktopAutoOpen: config.desktop.autoOpen,
+          sessionTtlDays: config.security.sessionTtlDays,
           time: new Date().toISOString(),
         });
         return;
@@ -166,7 +167,7 @@ export async function startBridge({ configPath } = {}) {
       if (pathname === "/api/pair" && request.method === "POST") {
         const body = await readJson(request);
         const session = await security.pair(String(body.code || ""), body.deviceName);
-        sendJson(response, 200, session);
+        sendJson(response, 200, session, { "Set-Cookie": sessionCookie(session.token, session.expiresAt, request) });
         return;
       }
 
@@ -248,7 +249,15 @@ export async function startBridge({ configPath } = {}) {
 
       if (pathname === "/api/session/revoke" && request.method === "POST") {
         await security.revoke(token);
-        sendJson(response, 200, { ok: true });
+        sendJson(response, 200, { ok: true }, { "Set-Cookie": clearSessionCookie(request) });
+        return;
+      }
+
+      if (pathname === "/api/session" && request.method === "GET") {
+        const session = security.session(token);
+        sendJson(response, 200, { ok: true, expiresAt: session.expiresAt }, {
+          "Set-Cookie": sessionCookie(token, session.expiresAt, request),
+        });
         return;
       }
 

@@ -1,6 +1,6 @@
 {
   "name": "mobile-codex-bridge",
-  "version": "0.18.0+codex.20260715093026",
+  "version": "0.19.0+codex.20260716031934",
   "description": "Create and monitor local Codex tasks from a paired phone without signing in to ChatGPT on the phone.",
   "author": {
     "name": "ploverYang",

@@ -68,6 +68,7 @@ export async function runDoctor({
       configPath: config.configPath,
       projectIds: config.projects.map((project) => project.id),
       pairingTtlMinutes: config.security.pairingTtlMinutes,
+      sessionTtlDays: config.security.sessionTtlDays,
     });
   } catch (error) {
     add(checks, "config", "fail", error.message, "运行 scripts/setup-windows.ps1 创建配置");

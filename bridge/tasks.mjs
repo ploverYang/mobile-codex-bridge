@@ -132,14 +132,38 @@ function publicThreadItem(item = {}) {
   return { ...base, type: "activity", activityType: "other", title: "执行步骤", text: item.type || "Codex 正在处理", status: item.status || null };
 }
 
+function dedupeConversationItems(items) {
+  const result = [];
+  const assistantText = new Map();
+  for (const item of items) {
+    if (item.type !== "assistant" || !item.text?.trim()) {
+      result.push(item);
+      continue;
+    }
+    const key = item.text.trim();
+    const previousIndex = assistantText.get(key);
+    if (previousIndex === undefined) {
+      assistantText.set(key, result.length);
+      result.push(item);
+      continue;
+    }
+    const previous = result[previousIndex];
+    if (item.phase === "final_answer" && previous.phase !== "final_answer") {
+      result[previousIndex] = item;
+    }
+  }
+  return result;
+}
+
 function publicTurn(turn = {}) {
+  const items = (turn.items || []).map(publicThreadItem).filter((item) => item.type !== "reasoning" || item.text);
   return {
     id: turn.id || randomUUID(),
     status: statusName(turn.status),
     startedAt: turn.startedAt ? Number(turn.startedAt) * 1000 : null,
     completedAt: turn.completedAt ? Number(turn.completedAt) * 1000 : null,
     durationMs: turn.durationMs ?? null,
-    items: (turn.items || []).map(publicThreadItem).filter((item) => item.type !== "reasoning" || item.text),
+    items: dedupeConversationItems(items),
   };
 }
 
@@ -192,6 +216,7 @@ function mergePublicTurns(historyTurns, liveTurns) {
       if (index === -1) existing.items.push(item);
       else existing.items[index] = { ...existing.items[index], ...item };
     }
+    existing.items = dedupeConversationItems(existing.items);
   }
   return merged.sort((a, b) => (a.startedAt || 0) - (b.startedAt || 0));
 }
@@ -558,7 +583,14 @@ export class TaskManager {
         liveTurn.status = finalStatus;
         liveTurn.completedAt = params.turn?.completedAt || Date.now() / 1000;
         liveTurn.durationMs = params.turn?.durationMs ?? liveTurn.durationMs;
-        for (const item of params.turn?.items || []) upsertLiveItem(liveTurn, item);
+        const completedItems = params.turn?.items;
+        if (Array.isArray(completedItems) && completedItems.length) {
+          const localUser = liveTurn.items.find((item) => item.type === "userMessage");
+          liveTurn.items = completedItems.map((item) => structuredClone(item));
+          if (localUser && !liveTurn.items.some((item) => item.type === "userMessage")) {
+            liveTurn.items.unshift(localUser);
+          }
+        }
       }
       if (/fail|error/i.test(finalStatus)) {
         task.status = "failed";
