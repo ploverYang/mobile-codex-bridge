@@ -168,11 +168,9 @@
             <header class="detail-header">
               <button class="detail-back" type="button" data-view-target="tasks" aria-label="返回任务中心">←</button>
               <div class="detail-heading">
-                <span class="eyebrow" id="detail-project">任务详情</span>
                 <h2 id="detail-title">正在读取任务…</h2>
                 <div class="detail-meta">
                   <span class="status-pill" id="detail-status">读取中</span>
-                  <span id="detail-turn-count"></span>
                   <span class="refresh-feedback" id="detail-refresh-feedback" role="status" aria-live="polite"></span>
                 </div>
               </div>
@@ -184,26 +182,19 @@
             </div>
 
             <div class="detail-controls">
-              <div class="execution-options detail-execution-options" aria-label="本轮 Codex 执行配置">
-                <label><span>访问</span><select id="detail-access"></select></label>
-                <label><span>模型</span><select id="detail-model"></select></label>
-                <label><span>推理</span><select id="detail-effort"></select></label>
-              </div>
-              <div class="detail-quick-actions">
-                <button class="task-action" id="detail-open-desktop" type="button">电脑端打开</button>
-                <button class="task-action danger-action" id="detail-cancel" type="button" hidden>停止任务</button>
-                <button class="task-action archive-action" id="detail-archive" type="button" hidden>归档任务</button>
-              </div>
               <form class="detail-composer" id="detail-followup-form">
                 <textarea id="detail-followup-input" rows="1" maxlength="12000" placeholder="继续追问或补充要求…"></textarea>
                 <button id="detail-followup-send" type="submit" aria-label="发送后续指令">↑</button>
               </form>
-              <p class="detail-hint" id="detail-hint">使用系统键盘麦克风可以直接语音输入</p>
-            </div>
-
-            <div class="tasks-panel-footer detail-footer">
-              <span>CODEX CONVERSATION</span>
-              <span class="app-version">v—</span>
+              <div class="detail-toolbar" aria-label="本轮 Codex 执行配置">
+                <div class="detail-execution-options">
+                  <label class="detail-access-control"><span>访问等级</span><select id="detail-access" aria-label="访问等级"></select></label>
+                  <label><span>模型</span><select id="detail-model" aria-label="模型"></select></label>
+                  <label><span>推理深度</span><select id="detail-effort" aria-label="推理深度"></select></label>
+                </div>
+                <button class="detail-desktop" id="detail-open-desktop" type="button" title="在电脑端打开" aria-label="在电脑端打开"><i aria-hidden="true"></i></button>
+                <button class="detail-stop" id="detail-cancel" type="button" title="停止任务" aria-label="停止任务" hidden>■</button>
+              </div>
             </div>
           </section>
         </div>

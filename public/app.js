@@ -483,31 +483,15 @@ function renderTaskDetail(task) {
   const conversation = $("#detail-conversation");
   const wasNearBottom = state.detailFirstRender || conversation.scrollHeight - conversation.scrollTop - conversation.clientHeight < 140;
   $("#detail-title").textContent = task.firstPromptPreview || task.threadPreview || task.promptPreview;
-  $("#detail-project").textContent = task.projectName || "任务详情";
   $("#detail-status").textContent = STATUS[task.status] || task.status;
   $("#detail-status").dataset.status = task.status;
-  const threadLabel = task.threadId ? task.threadId.slice(0, 13) : "等待线程";
-  $("#detail-turn-count").textContent = `${task.turns.length} 轮对话 · ${threadLabel}`;
   if (state.detailOptionsTaskId !== task.id) {
     setExecutionSelection("detail", task);
     state.detailOptionsTaskId = task.id;
   }
   $("#detail-open-desktop").disabled = !task.canOpenOnDesktop;
   $("#detail-cancel").hidden = !task.canCancel;
-  const archiveButton = $("#detail-archive");
-  archiveButton.hidden = !task.canArchive && !task.canUnarchive;
-  archiveButton.textContent = task.canUnarchive ? "恢复到任务列表" : "归档任务";
-  archiveButton.dataset.unarchive = String(task.canUnarchive);
   $("#detail-followup-form").hidden = !task.canFollowUp;
-  $("#detail-hint").textContent = task.canFollowUp
-    ? "继续追问会保留这个 Codex 线程的全部上下文"
-    : task.archivedAt
-      ? task.archiveSync === "local"
-        ? "此会话仅归档到手机历史；电脑端尚未同步，可在桌面端手动归档。"
-        : "此会话已归档到电脑端 Codex 的 Archived tasks，可在此恢复。"
-    : task.status === "waiting_approval"
-      ? "Codex 正在等待你的审批"
-      : "Codex 正在执行，进度会自动更新";
 
   const content = document.createDocumentFragment();
   if (task.error) content.append(element("div", "detail-warning", `任务未完成：${task.error}`));
@@ -759,7 +743,6 @@ $("#new-task-button").addEventListener("click", startNewTask);
 $("#refresh-detail").addEventListener("click", () => manualRefresh("detail"));
 $("#detail-open-desktop").addEventListener("click", (event) => openOnDesktop(state.activeTaskId, event.currentTarget));
 $("#detail-cancel").addEventListener("click", (event) => cancelTask(state.activeTaskId, event.currentTarget));
-$("#detail-archive").addEventListener("click", (event) => setTaskArchived(state.activeTaskId, event.currentTarget.dataset.unarchive === "true", event.currentTarget));
 $("#detail-followup-form").addEventListener("submit", (event) => sendFollowUp(
   event,
   state.activeTaskId,

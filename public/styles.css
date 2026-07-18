@@ -296,15 +296,15 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
   box-shadow: 0 35px 120px rgba(0, 0, 0, 0.72);
 }
 .task-detail.mobile-active { display: flex; animation: detailIn 220ms ease both; }
-.detail-header { display: flex; flex: 0 0 auto; align-items: flex-start; gap: 14px; padding: 22px 24px 18px; border-bottom: 1px solid var(--line); background: rgba(17, 19, 15, 0.96); }
-.detail-back { display: grid; flex: 0 0 40px; width: 40px; height: 40px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--paper); cursor: pointer; font-size: 18px; }
+.detail-header { display: flex; flex: 0 0 auto; align-items: center; gap: 10px; min-height: 54px; padding: 8px 14px; border-bottom: 1px solid var(--line); background: rgba(17, 19, 15, 0.96); }
+.detail-back { display: grid; flex: 0 0 34px; width: 34px; height: 34px; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--paper); cursor: pointer; font-size: 16px; }
 .detail-back:hover { border-color: var(--acid); color: var(--acid); }
-.detail-heading { min-width: 0; flex: 1; }
-.detail-heading h2 { display: -webkit-box; overflow: hidden; margin-top: 5px; font-family: Bahnschrift, "Microsoft YaHei UI", sans-serif; font-size: 20px; line-height: 1.35; letter-spacing: -0.02em; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
-.detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 9px; color: var(--muted); font: 10px/1.4 Consolas, monospace; }
+.detail-heading { display: flex; min-width: 0; flex: 1; align-items: center; gap: 8px; }
+.detail-heading h2 { overflow: hidden; flex: 1; margin: 0; font-family: Bahnschrift, "Microsoft YaHei UI", sans-serif; font-size: 15px; font-weight: 650; line-height: 1.2; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+.detail-meta { display: flex; flex: 0 0 auto; align-items: center; gap: 6px; margin: 0; color: var(--muted); font: 9px/1 Consolas, monospace; }
 .detail-meta .status-pill { color: var(--acid); }
-.detail-refresh { flex: 0 0 40px; width: 40px; height: 40px; }
-.detail-conversation { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 18px 28px 30px; scroll-behavior: smooth; scrollbar-color: rgba(184, 243, 74, 0.25) transparent; }
+.detail-refresh { flex: 0 0 34px; width: 34px; height: 34px; }
+.detail-conversation { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 12px 24px 20px; scroll-behavior: smooth; scrollbar-color: rgba(184, 243, 74, 0.25) transparent; }
 .detail-loading { display: flex; min-height: 180px; align-items: center; justify-content: center; gap: 12px; color: var(--muted); font-size: 12px; }
 .detail-loading i { width: 14px; height: 14px; border: 2px solid var(--line); border-top-color: var(--acid); border-radius: 50%; animation: sweep 0.8s linear infinite; }
 .detail-warning { margin: 12px 0; padding: 12px 14px; border: 1px solid rgba(255, 137, 86, 0.3); border-radius: 10px; background: rgba(255, 137, 86, 0.05); color: #ffb08b; font-size: 12px; line-height: 1.6; }
@@ -343,17 +343,31 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .process-body p { margin: 0; font-size: 11px; }
 .process-text, .process-output { overflow-x: auto; margin: 0; color: #aeb3a4; font: 11px/1.65 Consolas, "Microsoft YaHei UI", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .process-output { max-height: 260px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: #858b7d; }
-.detail-controls { flex: 0 0 auto; padding: 12px 20px 8px; border-top: 1px solid var(--line); background: rgba(14, 16, 13, 0.97); }
-.detail-execution-options { margin: 0 0 9px; }
-.detail-quick-actions { display: flex; gap: 7px; margin-bottom: 8px; }
-.detail-quick-actions .task-action { padding: 7px 10px; font-size: 9px; }
+.detail-controls { flex: 0 0 auto; padding: 8px 12px max(7px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: rgba(14, 16, 13, 0.97); }
 .detail-composer { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: end; gap: 8px; padding: 7px 7px 7px 13px; border: 1px solid rgba(232, 232, 220, 0.18); border-radius: 17px; background: rgba(7, 8, 7, 0.82); }
 .detail-composer textarea { min-height: 42px; max-height: 160px; padding: 10px 3px; border: 0; background: transparent; box-shadow: none; resize: none; font-size: 13px; transition: min-height 180ms ease, box-shadow 180ms ease; }
 .detail-composer:focus-within textarea { min-height: 112px; box-shadow: 0 0 0 2px rgba(92, 225, 213, 0.08); }
 .detail-composer button { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 50%; background: var(--acid); color: var(--ink); cursor: pointer; font-size: 20px; font-weight: 900; }
 .detail-composer button:disabled { opacity: 0.45; cursor: wait; }
-.detail-hint { margin: 6px 3px 0; color: #656b5f; font-size: 9px; text-align: center; }
-.detail-footer { padding: 7px 20px max(8px, env(safe-area-inset-bottom)); }
+.detail-toolbar { display: flex; min-height: 30px; align-items: center; gap: 7px; padding: 5px 2px 0; }
+.detail-execution-options { display: flex; min-width: 0; flex: 1; align-items: center; gap: 2px; }
+.detail-execution-options label { position: relative; min-width: 0; }
+.detail-execution-options label > span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.detail-execution-options label:nth-child(2) { flex: 0 1 auto; }
+.detail-execution-options select { width: auto; max-width: 128px; height: 28px; padding: 0 19px 0 7px; border: 0; border-radius: 7px; background-color: transparent; color: #c9ccbf; box-shadow: none; font: 11px/1 Bahnschrift, "Microsoft YaHei UI", sans-serif; text-overflow: ellipsis; cursor: pointer; }
+.detail-execution-options select:hover, .detail-execution-options select:focus { background-color: rgba(232, 232, 220, 0.07); }
+.detail-access-control { flex: 0 0 92px; }
+.detail-access-control select { width: 92px; max-width: 92px; color: var(--warm); }
+.detail-execution-options label + label::before { content: ""; position: absolute; top: 8px; left: -1px; width: 1px; height: 12px; background: var(--line); }
+.detail-desktop, .detail-stop { display: grid; flex: 0 0 28px; width: 28px; height: 28px; place-items: center; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.detail-desktop { color: #aeb3a4; }
+.detail-desktop:hover { background: rgba(232, 232, 220, 0.07); color: var(--paper); }
+.detail-desktop:disabled { cursor: default; opacity: 0.28; }
+.detail-desktop i { position: relative; display: block; width: 14px; height: 10px; border: 1.5px solid currentColor; border-radius: 2px; }
+.detail-desktop i::before { content: ""; position: absolute; bottom: -4px; left: 5px; width: 4px; height: 3px; border-left: 1.5px solid currentColor; border-right: 1.5px solid currentColor; }
+.detail-desktop i::after { content: ""; position: absolute; bottom: -5px; left: 3px; width: 8px; border-bottom: 1.5px solid currentColor; }
+.detail-stop { color: var(--warm); font-size: 9px; }
+.detail-stop:hover { background: rgba(255, 137, 86, 0.1); }
 
 footer { display: flex; justify-content: space-between; margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--line); color: #5f6458; font-family: Consolas, monospace; font-size: 10px; letter-spacing: 0.12em; }
 .mobile-header-actions, .mobile-back, .tasks-panel-footer { display: none; }
@@ -403,15 +417,15 @@ footer { display: flex; justify-content: space-between; margin-top: 80px; paddin
   .tasks-section { position: fixed; z-index: 60; inset: 0; width: 100%; height: 100dvh; min-height: 0; padding: max(18px, env(safe-area-inset-top)) 15px max(12px, env(safe-area-inset-bottom)); border: 0; border-radius: 0; background: var(--ink); box-shadow: none; }
   .task-detail { top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100dvh; transform: none; border: 0; border-radius: 0; box-shadow: none; }
   .task-detail.mobile-active { animation-name: detailInMobile; }
-  .detail-header { padding: max(14px, env(safe-area-inset-top)) 14px 12px; }
-  .detail-heading h2 { font-size: 16px; }
-  .detail-refresh { flex-basis: 38px; width: 38px; height: 38px; }
-  .detail-conversation { padding: 10px 17px 24px; }
+  .detail-header { min-height: calc(50px + env(safe-area-inset-top)); padding: max(8px, env(safe-area-inset-top)) 10px 7px; }
+  .detail-heading h2 { font-size: 14px; }
+  .detail-meta .status-pill { max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .detail-refresh { flex-basis: 32px; width: 32px; height: 32px; }
+  .detail-conversation { padding: 7px 13px 14px; }
   .message-text { max-width: 100%; font-size: 14px; line-height: 1.75; }
   .conversation-message.user .message-text { max-width: 86%; }
   .process-card { margin-left: 4px; }
-  .detail-controls { padding: 9px 12px 6px; }
-  .detail-footer { display: flex; margin-top: 0; padding: 7px 14px max(8px, env(safe-area-inset-bottom)); }
+  .detail-controls { padding: 7px 8px max(5px, env(safe-area-inset-bottom)); }
   .tasks-title { margin-bottom: 14px; }
   .tasks-title > div:nth-child(2) { flex: 1; margin-left: 12px; }
   .tasks-title h2 { font-size: 31px; }
@@ -429,6 +443,8 @@ footer { display: flex; justify-content: space-between; margin-top: 80px; paddin
   .task-icon-action { width: 28px; height: 28px; }
   .approval-card { grid-column: 2; }
   .detail-composer:focus-within textarea { min-height: 132px; }
+  .detail-execution-options select { max-width: 112px; padding-right: 17px; font-size: 10px; }
+  .detail-access-control { flex-basis: 92px; }
   footer { display: flex; margin-top: 12px; padding: 10px 3px 2px; border-top: 1px solid var(--line); }
 }
 
