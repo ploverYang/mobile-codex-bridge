@@ -24,7 +24,7 @@ test("configuration validates and normalizes allowlisted projects", async () => 
     assert.equal(config.storage.persistOutputs, false);
     assert.equal(config.storage.maxTasks, 100);
     assert.equal(config.desktop.autoOpen, "never");
-    assert.equal(config.security.pairingTtlMinutes, 10_080);
+    assert.equal(config.security.pairingTtlMinutes, 30);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

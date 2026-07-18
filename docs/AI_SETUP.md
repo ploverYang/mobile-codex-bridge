@@ -5,7 +5,7 @@
 ## 必须遵守的边界
 
 - 首次启动前明确告知用户：手机任务可选择与电脑端一致的访问等级，默认完全访问，可执行命令并修改电脑文件。
-- 一次性配对码默认有效 7 天（`10080` 分钟），成功使用后立即失效。除非用户要求，否则不要缩短。
+- 一次性配对码默认有效 30 分钟，可配置范围为 10–30 分钟，成功使用后立即失效。
 - 保持 `server.host: 127.0.0.1`。只有用户明确选择受保护的网络方式时才改变监听边界。
 - Tailscale Serve、Windows 登录自启、项目白名单中的每个目录都需要用户明确确认。
 - 不读取或输出 `data/state.json`、admin token、session token、微信密钥、私有 tailnet 信息或无关任务历史。
@@ -95,4 +95,4 @@
 
 ## 可直接给 AI 的提示词
 
-> 请先阅读仓库根目录 `AGENTS.md` 和 `docs/AI_SETUP.md`，帮助我安装 Mobile Codex Bridge。先运行 `doctor -Json`，保留已有配置，只添加我明确指定的项目。一次性配对码保持 7 天。未经我确认，不启用登录自启、不运行 Tailscale Serve、不改变监听地址。不要读取或输出 `data/state.json`、管理令牌或会话令牌。完成后验证 doctor、self-test、status 和 health，再把手机地址与一次性配对码告诉我。
+> 请先阅读仓库根目录 `AGENTS.md` 和 `docs/AI_SETUP.md`，帮助我安装 Mobile Codex Bridge。先运行 `doctor -Json`，保留已有配置，只添加我明确指定的项目。一次性配对码保持 30 分钟。未经我确认，不启用登录自启、不运行 Tailscale Serve、不改变监听地址。不要读取或输出 `data/state.json`、管理令牌或会话令牌。完成后验证 doctor、self-test、status 和 health，再把手机地址与一次性配对码告诉我。

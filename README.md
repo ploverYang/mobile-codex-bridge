@@ -42,7 +42,7 @@ flowchart LR
 
 3. 按提示选择一个允许手机操作的项目、决定是否登录自启，然后在手机打开向导给出的地址并输入一次性配对码。
 
-一次性配对码默认有效 7 天，成功配对后立即失效；已配对设备的会话默认有效 30 天。安装向导不会自动开放公网，也不会未经确认安装 Windows 登录自启任务。
+一次性配对码默认有效 30 分钟，成功配对后立即失效；已配对设备的会话默认有效 30 天。安装向导不会自动开放公网，也不会未经确认安装 Windows 登录自启任务。
 
 如果你希望让 AI 帮你完成安装，把仓库交给 AI 并让它阅读 [AI 安装说明](docs/AI_SETUP.md)。
 
@@ -84,7 +84,7 @@ tailscale serve status
 | `server.publicBaseUrl` | 空 | 手机实际访问的私有 HTTPS 地址 |
 | `projects[]` | 必填 | 手机可选择的项目白名单 |
 | `desktop.autoOpen` | `on-complete` | 完成后在 Codex Desktop 加载任务 |
-| `security.pairingTtlMinutes` | `10080` | 一次性配对码有效 7 天，使用后失效 |
+| `security.pairingTtlMinutes` | `30` | 一次性配对码有效 10–30 分钟，默认 30 分钟，使用后失效 |
 | `security.sessionTtlDays` | `30` | 已配对设备会话有效期 |
 | `storage.persistOutputs` | `false` | Bridge 不额外持久化完整 Codex 输出 |
 

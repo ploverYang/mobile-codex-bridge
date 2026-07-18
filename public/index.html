@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#11130f" />
     <meta name="description" content="从配对手机创建本机 Codex 任务" />
+    <meta name="app-version" content="0.24.0" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css?v=0.23.0" />
+    <link rel="stylesheet" href="/styles.css?v=0.24.0" />
     <title>手机遥控 Codex</title>
   </head>
   <body>
@@ -19,6 +20,13 @@
           <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i></span>
           <span>CODEX / RELAY</span>
         </a>
+        <section class="status-dock" id="paired-status" aria-label="配对状态" hidden>
+          <div class="status-item">
+            <span class="paired-dot" aria-hidden="true"></span>
+            <strong>已配对</strong>
+          </div>
+          <button class="logout-button" id="logout" type="button" title="解除配对" aria-label="解除配对"><span aria-hidden="true">⎋</span></button>
+        </section>
         <div class="connection" id="connection-state" role="status">
           <span class="signal-dot"></span>
           <span id="connection-label">连接中</span>
@@ -34,7 +42,7 @@
       <section class="pair-panel panel" id="pair-panel">
         <div class="eyebrow">私人链路 · 首次配对</div>
         <h1>让声音落到<br />你的电脑里。</h1>
-        <p class="lede">在电脑端运行 <code>npm run pair</code>，把显示的 6 位一次性配对码填在这里。配对码默认 7 天有效，成功使用后立即失效；手机无需登录 ChatGPT。</p>
+        <p class="lede">在电脑端运行 <code>npm run pair</code>，把显示的 6 位一次性配对码填在这里。配对码默认 30 分钟有效，成功使用后立即失效；手机无需登录 ChatGPT。</p>
         <form id="pair-form" class="pair-form">
           <label for="pair-code">一次性配对码</label>
           <input
@@ -62,14 +70,6 @@
       </section>
 
       <section id="app-panel" hidden>
-        <section class="status-dock panel" aria-label="连接概况">
-          <div class="status-item">
-            <span class="paired-dot" aria-hidden="true"></span>
-            <strong>已安全配对</strong>
-          </div>
-          <button class="text-button logout-button" id="logout" type="button">解除配对</button>
-        </section>
-
         <div class="workspace">
           <section class="composer panel view-panel mobile-active" data-view="compose">
             <div class="section-heading">
@@ -103,9 +103,11 @@
               </div>
 
               <div class="execution-options" aria-label="Codex 执行配置">
-                <label><span>访问等级</span><select id="compose-access"></select></label>
-                <label><span>模型</span><select id="compose-model"></select></label>
-                <label><span>推理深度</span><select id="compose-effort"></select></label>
+                <label class="compose-access-control"><span>访问等级</span><select id="compose-access" aria-label="访问等级"></select></label>
+                <div class="compose-model-controls">
+                  <label><span>模型</span><select id="compose-model" aria-label="模型"></select></label>
+                  <label><span>推理深度</span><select id="compose-effort" aria-label="推理深度"></select></label>
+                </div>
               </div>
 
               <button class="primary-action launch" id="submit-task" type="submit">
@@ -146,10 +148,6 @@
                 <span>等待第一条指令</span>
                 <p>在“新建任务”中输入要求，电脑端会创建一个真实的 Codex 任务。</p>
               </div>
-            </div>
-            <div class="tasks-panel-footer">
-              <span>PRIVATE BRIDGE</span>
-              <span class="app-version">v—</span>
             </div>
           </section>
 
@@ -194,6 +192,6 @@
         <span class="app-version">v—</span>
       </footer>
     </main>
-    <script type="module" src="/app.js?v=0.23.0"></script>
+    <script type="module" src="/app.js?v=0.24.0"></script>
   </body>
 </html>

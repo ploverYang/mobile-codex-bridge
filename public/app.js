@@ -1,6 +1,7 @@
 import { ACTIVE_STATUSES, DetailRefreshGate, shouldRefreshTaskList, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
 
 const $ = (selector) => document.querySelector(selector);
+const CLIENT_VERSION = document.querySelector('meta[name="app-version"]')?.content || "";
 const state = {
   token: localStorage.getItem("mobile-codex-token") || "",
   projects: [],
@@ -54,9 +55,32 @@ function message(element, text, success = false) {
   element.classList.toggle("success", success);
 }
 
+async function reloadForVersion(version) {
+  if (!version || version === CLIENT_VERSION) return false;
+  const guardKey = `mobile-codex-version-reload:${version}`;
+  if (sessionStorage.getItem(guardKey)) return false;
+  sessionStorage.setItem(guardKey, "1");
+
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+  }
+  if ("caches" in window) {
+    const keys = await caches.keys();
+    await Promise.all(keys.map((key) => caches.delete(key)));
+  }
+
+  const url = new URL(location.href);
+  url.searchParams.set("v", version);
+  url.searchParams.set("_reload", String(Date.now()));
+  location.replace(url);
+  return true;
+}
+
 async function checkHealth() {
   try {
     const health = await api("/api/health");
+    if (await reloadForVersion(health.version)) return false;
     document.querySelectorAll(".app-version").forEach((element) => {
       element.textContent = health.version ? `v${health.version}` : "v—";
     });
@@ -140,6 +164,7 @@ async function enterApp() {
   await loadExecutionOptions(storedExecutionSelection());
   $("#pair-panel").hidden = true;
   $("#app-panel").hidden = false;
+  $("#paired-status").hidden = false;
   await refreshTasks();
 }
 
@@ -232,10 +257,12 @@ function clearSession(reload = true) {
   else {
     $("#app-panel").hidden = true;
     $("#pair-panel").hidden = false;
+    $("#paired-status").hidden = true;
   }
 }
 
 async function logout() {
+  if (!window.confirm("确定解除这台手机的配对？解除后需要使用新的一次性配对码才能重新连接。")) return;
   try {
     await api("/api/session/revoke", { method: "POST" });
   } catch {

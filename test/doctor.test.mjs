@@ -12,7 +12,7 @@ test("doctor exposes stable machine-readable checks without treating optional se
       projects: [{ id: "demo" }],
       codex: { binary: "codex" },
       server: { port: 3847 },
-      security: { pairingTtlMinutes: 10_080, sessionTtlDays: 30 },
+      security: { pairingTtlMinutes: 30, sessionTtlDays: 30 },
     }),
     resolveLaunch: () => ({ command: "codex.exe", argsPrefix: [] }),
     codexVersion: async () => "codex-cli 1.0.0",
@@ -23,7 +23,7 @@ test("doctor exposes stable machine-readable checks without treating optional se
   assert.equal(report.ok, true);
   assert.equal(report.summary.fail, 0);
   assert.equal(report.checks.find((check) => check.id === "bridge").status, "warn");
-  assert.equal(report.checks.find((check) => check.id === "config").details.pairingTtlMinutes, 10_080);
+  assert.equal(report.checks.find((check) => check.id === "config").details.pairingTtlMinutes, 30);
   assert.equal(report.checks.find((check) => check.id === "config").details.sessionTtlDays, 30);
   assert.match(formatDoctorReport(report), /0 失败/);
 });

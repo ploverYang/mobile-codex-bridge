@@ -11,7 +11,7 @@ When the user asks to install, configure, update, or diagnose this repository:
 5. Explain before first start that the PWA can select the permission profiles advertised by Codex, and that the default remains full filesystem/command access.
 6. Do not install login startup, run `tailscale serve`, expose a port, or add a project without explicit user confirmation.
 7. Never read or reveal `data/state.json`, admin tokens, session tokens, WeChat secrets, private tailnet names, or unrelated task history. A newly generated one-time pairing code may be shown only to the requesting user.
-8. The one-time pairing code intentionally defaults to 7 days (`10080` minutes) and becomes invalid immediately after successful use. Do not shorten it unless the user asks.
+8. The one-time pairing code defaults to 30 minutes, accepts only 10–30 minutes, and becomes invalid immediately after successful use.
 9. Complete setup only after `doctor`, `status`, `/api/health`, and a harmless first task have been verified in proportion to the environment.
 
 Repository facts and commands belong in `docs/AI_SETUP.md`; do not duplicate a drifting installation procedure in model-specific instruction files.

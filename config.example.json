@@ -19,7 +19,7 @@
     "autoOpen": "on-complete"
   },
   "security": {
-    "pairingTtlMinutes": 10080,
+    "pairingTtlMinutes": 30,
     "sessionTtlDays": 30,
     "maxPromptChars": 12000,
     "rateLimitPerMinute": 30

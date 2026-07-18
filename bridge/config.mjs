@@ -82,7 +82,7 @@ export async function loadConfig(configPath = getConfigPath()) {
       autoOpen: enumValue(raw.desktop?.autoOpen, "never", ["never", "on-start", "on-complete"], "desktop.autoOpen"),
     },
     security: {
-      pairingTtlMinutes: integerInRange(raw.security?.pairingTtlMinutes, 10_080, 1, 525_600, "security.pairingTtlMinutes"),
+      pairingTtlMinutes: integerInRange(raw.security?.pairingTtlMinutes, 30, 10, 30, "security.pairingTtlMinutes"),
       sessionTtlDays: integerInRange(raw.security?.sessionTtlDays, 30, 1, 365, "security.sessionTtlDays"),
       maxPromptChars: integerInRange(raw.security?.maxPromptChars, 12000, 100, 100000, "security.maxPromptChars"),
       rateLimitPerMinute: integerInRange(raw.security?.rateLimitPerMinute, 30, 5, 600, "security.rateLimitPerMinute"),
