@@ -19,6 +19,8 @@ test("release version stays aligned across runtime, plugin manifest, and PWA cac
   assert.match(index, new RegExp(`<meta name="app-version" content="${escapedVersion}"`));
   assert.match(index, new RegExp(`/styles\\.css\\?v=${escapedVersion}`));
   assert.match(index, new RegExp(`/app\\.js\\?v=${escapedVersion}`));
+  assert.match(index, /class="composer-version app-version"/);
+  assert.doesNotMatch(index, /<footer>/);
   assert.match(app, /cache: "no-store"/);
   assert.match(app, /navigator\.serviceWorker\.getRegistrations\(\)/);
   assert.match(app, /location\.replace\(url\)/);

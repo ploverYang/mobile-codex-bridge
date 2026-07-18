@@ -212,7 +212,9 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .input-assist { position: absolute; right: 12px; bottom: 10px; left: 12px; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 10px; line-height: 1.4; pointer-events: none; }
 .input-assist strong { color: #c4c8ba; font-weight: 600; }
 .keyboard-mark { color: var(--signal); font-size: 12px; }
-.launch { margin-top: 12px; }
+.launch-wrap { position: relative; margin-top: 12px; padding-bottom: 14px; }
+.launch { margin-top: 0; }
+.composer-version { position: absolute; bottom: 0; left: 2px; color: #5f6458; font: 9px/1 Consolas, monospace; }
 
 .text-button { width: 100%; margin-top: 20px; padding: 13px; border: 1px solid var(--line); border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font-size: 11px; }
 .text-button:hover { border-color: var(--danger); color: var(--danger); }
@@ -371,7 +373,6 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .detail-stop { color: var(--warm); font-size: 9px; }
 .detail-stop:hover { background: rgba(255, 137, 86, 0.1); }
 
-footer { display: flex; justify-content: space-between; margin-top: 80px; padding-top: 18px; border-top: 1px solid var(--line); color: #5f6458; font-family: Consolas, monospace; font-size: 10px; letter-spacing: 0.12em; }
 .mobile-header-actions, .mobile-back, .tasks-panel-footer { display: none; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -437,7 +438,8 @@ footer { display: flex; justify-content: space-between; margin-top: 80px; paddin
   .execution-options { grid-template-columns: minmax(86px, 0.72fr) minmax(0, 1.75fr); gap: 5px; margin-top: 8px; }
   .execution-options select { height: 32px; padding: 0 5px; font-size: 9px; }
   .compose-model-controls { grid-template-columns: minmax(0, 1.45fr) minmax(58px, 0.68fr); gap: 5px; }
-  .launch { min-height: 52px; margin-top: 10px; }
+  .launch-wrap { margin-top: 10px; padding-bottom: 13px; }
+  .launch { min-height: 52px; }
   #task-message { min-height: 14px; margin-top: 6px; font-size: 10px; }
   .task-card { grid-template-columns: 8px minmax(0, 1fr) auto auto; gap: 8px; min-height: 62px; padding: 9px 10px; }
   .task-card .status-pill { grid-column: auto; grid-row: auto; justify-self: auto; }
@@ -446,9 +448,6 @@ footer { display: flex; justify-content: space-between; margin-top: 80px; paddin
   .detail-composer:focus-within textarea { min-height: 132px; }
   .detail-execution-options select { max-width: 112px; padding-right: 17px; font-size: 10px; }
   .detail-access-control { flex-basis: 92px; }
-  footer { position: fixed; z-index: 10; right: 12px; bottom: max(4px, env(safe-area-inset-bottom)); display: flex; margin: 0; padding: 0; border: 0; pointer-events: none; }
-  footer > span:first-child { display: none; }
-  footer .app-version { color: #5f6458; font: 9px/1 Consolas, monospace; letter-spacing: 0; }
 }
 
 @keyframes detailInMobile { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
