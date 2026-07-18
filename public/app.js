@@ -10,7 +10,10 @@ const state = {
   activeTaskId: null,
   activeView: "compose",
   detailFirstRender: true,
+  detailOptionsTaskId: null,
   detailRefreshGate: new DetailRefreshGate(),
+  executionOptions: null,
+  executionControlsInitialized: false,
   refreshFeedbackTimers: new Map(),
   installPrompt: null,
   taskRefreshGate: new TaskRefreshGate(),
@@ -136,9 +139,83 @@ async function enterApp() {
   state.projects = projectsResult.projects;
   const select = $("#project-select");
   select.replaceChildren(...state.projects.map((project) => new Option(project.name, project.id)));
+  await loadExecutionOptions(storedExecutionSelection());
   $("#pair-panel").hidden = true;
   $("#app-panel").hidden = false;
   await refreshTasks();
+}
+
+function storedExecutionSelection() {
+  try {
+    return JSON.parse(localStorage.getItem("mobile-codex-execution-options") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function modelById(id) {
+  return state.executionOptions.models.find((model) => model.id === id)
+    || state.executionOptions.models.find((model) => model.id === state.executionOptions.defaults.model)
+    || state.executionOptions.models[0];
+}
+
+function updateEffortControl(scope, selectedEffort) {
+  const model = modelById($(`#${scope}-model`).value);
+  const effort = $(`#${scope}-effort`);
+  effort.replaceChildren(...model.efforts.map((item) => new Option(item.label, item.id)));
+  effort.value = model.efforts.some((item) => item.id === selectedEffort)
+    ? selectedEffort
+    : model.defaultEffort || model.efforts[0]?.id || "";
+}
+
+function updateAccessDescription(scope) {
+  if (scope !== "compose") return;
+  const selected = state.executionOptions.accessLevels.find((item) => item.id === $("#compose-access").value);
+  $("#compose-access-description").textContent = selected?.description || "";
+}
+
+function setExecutionSelection(scope, selection = {}) {
+  const defaults = state.executionOptions.defaults;
+  $(`#${scope}-access`).value = selection.accessLevel || defaults.accessLevel;
+  $(`#${scope}-model`).value = modelById(selection.model || defaults.model).id;
+  updateEffortControl(scope, selection.effort || defaults.effort);
+  updateAccessDescription(scope);
+}
+
+function executionSelection(scope) {
+  return {
+    accessLevel: $(`#${scope}-access`).value,
+    model: $(`#${scope}-model`).value,
+    effort: $(`#${scope}-effort`).value,
+  };
+}
+
+async function loadExecutionOptions(selection) {
+  state.executionOptions = await api(`/api/execution-options?projectId=${encodeURIComponent($("#project-select").value)}`);
+  initializeExecutionControls(selection);
+}
+
+function initializeExecutionControls(composeSelection = storedExecutionSelection()) {
+  for (const scope of ["compose", "detail"]) {
+    const access = $(`#${scope}-access`);
+    const model = $(`#${scope}-model`);
+    access.replaceChildren(...state.executionOptions.accessLevels.map((item) => new Option(item.label, item.id)));
+    model.replaceChildren(...state.executionOptions.models.map((item) => new Option(item.label, item.id)));
+  }
+  setExecutionSelection("compose", composeSelection);
+  setExecutionSelection("detail", state.executionOptions.defaults);
+  if (!state.executionControlsInitialized) {
+    for (const scope of ["compose", "detail"]) {
+      $(`#${scope}-model`).addEventListener("change", () => updateEffortControl(scope));
+      $(`#${scope}-access`).addEventListener("change", () => updateAccessDescription(scope));
+    }
+    document.querySelectorAll("#compose-access, #compose-model, #compose-effort").forEach((control) => {
+      control.addEventListener("change", () => {
+        localStorage.setItem("mobile-codex-execution-options", JSON.stringify(executionSelection("compose")));
+      });
+    });
+    state.executionControlsInitialized = true;
+  }
 }
 
 async function restoreSession() {
@@ -179,7 +256,7 @@ async function submitTask(event) {
   try {
     const result = await api("/api/tasks", {
       method: "POST",
-      body: JSON.stringify({ projectId: $("#project-select").value, prompt }),
+      body: JSON.stringify({ projectId: $("#project-select").value, prompt, ...executionSelection("compose") }),
     });
     $("#prompt").value = "";
     message($("#task-message"), "指令已提交，正在等待 Codex 确认启动…");
@@ -246,53 +323,29 @@ function taskCard(task) {
   const main = element("div", "task-main");
   main.append(element("h3", "", task.promptPreview));
   const meta = element("div", "task-meta");
-  meta.append(element("span", "", task.projectName), element("span", "", formatTime(task.createdAt)));
+  meta.append(element("span", "", task.projectName), element("span", "", formatTime(task.updatedAt)));
   if (task.messageCount > 1) meta.append(element("span", "", `${task.messageCount} 轮对话`));
-  if (task.threadId) meta.append(element("span", "", task.threadId.slice(0, 13)));
   main.append(meta);
-  const outputText = task.error || task.output;
-  if (outputText) main.append(element("p", `task-output${task.error ? " task-error" : ""}`, outputText.slice(-360)));
-  card.append(main, element("span", "status-pill", STATUS[task.status] || task.status));
-  for (const approval of task.approvals.filter((item) => item.status === "pending")) card.append(approvalCard(approval));
-  const actions = element("div", "task-actions");
-  if (task.canOpenOnDesktop) {
-    const open = element("button", "task-action", "电脑端打开");
-    open.type = "button";
-    open.addEventListener("click", () => openOnDesktop(task.id, open));
-    actions.append(open);
-  }
+  const status = element("span", "status-pill", STATUS[task.status] || task.status);
+  const actions = element("div", "task-card-actions");
   if (task.canCancel) {
-    const cancel = element("button", "task-action danger-action", "停止任务");
+    const cancel = element("button", "task-icon-action danger-action", "■");
     cancel.type = "button";
+    cancel.title = "停止任务";
+    cancel.setAttribute("aria-label", "停止任务");
     cancel.addEventListener("click", () => cancelTask(task.id, cancel));
     actions.append(cancel);
   }
-  if (task.canFollowUp) {
-    const follow = element("button", "task-action", "继续这个任务");
-    follow.type = "button";
-    const followForm = element("form", "followup-form");
-    followForm.hidden = true;
-    const input = element("textarea", "followup-input");
-    input.rows = 3;
-    input.maxLength = 12000;
-    input.placeholder = "补充要求或继续追问…";
-    const send = element("button", "followup-send", "发送后续指令 →");
-    send.type = "submit";
-    followForm.append(input, send);
-    follow.addEventListener("click", () => {
-      followForm.hidden = !followForm.hidden;
-      if (!followForm.hidden) input.focus();
-    });
-    followForm.addEventListener("submit", (event) => sendFollowUp(event, task.id, input, send));
-    actions.append(follow, followForm);
-  }
   if (task.canArchive || task.canUnarchive) {
-    const archive = element("button", "task-action archive-action", task.canUnarchive ? "恢复到任务列表" : "归档任务");
+    const archive = element("button", "task-icon-action archive-action", task.canUnarchive ? "↥" : "↧");
     archive.type = "button";
+    archive.title = task.canUnarchive ? "恢复任务" : "归档任务";
+    archive.setAttribute("aria-label", archive.title);
     archive.addEventListener("click", () => setTaskArchived(task.id, task.canUnarchive, archive));
     actions.append(archive);
   }
-  if (actions.childElementCount) card.append(actions);
+  card.append(main, status, actions);
+  for (const approval of task.approvals.filter((item) => item.status === "pending")) card.append(approvalCard(approval));
   card.classList.add("task-card-link");
   card.tabIndex = 0;
   card.setAttribute("role", "button");
@@ -303,6 +356,7 @@ function taskCard(task) {
   };
   card.addEventListener("click", openDetail);
   card.addEventListener("keydown", (event) => {
+    if (event.target !== card) return;
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       openTaskDetail(task.id);
@@ -434,6 +488,10 @@ function renderTaskDetail(task) {
   $("#detail-status").dataset.status = task.status;
   const threadLabel = task.threadId ? task.threadId.slice(0, 13) : "等待线程";
   $("#detail-turn-count").textContent = `${task.turns.length} 轮对话 · ${threadLabel}`;
+  if (state.detailOptionsTaskId !== task.id) {
+    setExecutionSelection("detail", task);
+    state.detailOptionsTaskId = task.id;
+  }
   $("#detail-open-desktop").disabled = !task.canOpenOnDesktop;
   $("#detail-cancel").hidden = !task.canCancel;
   const archiveButton = $("#detail-archive");
@@ -519,6 +577,7 @@ async function openTaskDetail(taskId) {
   state.activeTaskId = taskId;
   state.detailFirstRender = changed;
   if (changed) {
+    state.detailOptionsTaskId = null;
     const loading = element("div", "detail-loading");
     loading.append(element("i"), element("span", "", "正在读取 Codex 对话历史…"));
     $("#detail-conversation").replaceChildren(loading);
@@ -588,11 +647,13 @@ async function sendFollowUp(event, taskId, input, button) {
   try {
     const result = await api(`/api/tasks/${encodeURIComponent(taskId)}/follow-up`, {
       method: "POST",
-      body: JSON.stringify({ prompt }),
+      body: JSON.stringify({ prompt, ...executionSelection("detail") }),
     });
     message($("#task-message"), `已发送第 ${result.task.messageCount} 轮指令`, true);
     await refreshTasks();
     input.value = "";
+    input.blur();
+    button.blur();
     await openTaskDetail(taskId);
   } catch (error) {
     message($("#task-message"), error.message);
@@ -684,6 +745,14 @@ $("#pair-code").addEventListener("input", (event) => {
 });
 $("#pair-form").addEventListener("submit", pair);
 $("#task-form").addEventListener("submit", submitTask);
+$("#project-select").addEventListener("change", async () => {
+  const selection = executionSelection("compose");
+  try {
+    await loadExecutionOptions(selection);
+  } catch (error) {
+    message($("#task-message"), error.message);
+  }
+});
 $("#logout").addEventListener("click", logout);
 $("#refresh-tasks").addEventListener("click", () => manualRefresh("tasks"));
 $("#new-task-button").addEventListener("click", startNewTask);

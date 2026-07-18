@@ -8,7 +8,7 @@ When the user asks to install, configure, update, or diagnose this repository:
 2. Prefer `scripts/setup-windows.ps1` for first-time Windows setup and `scripts/bridge.ps1 doctor -Json` for diagnostics.
 3. Preserve an existing `config.local.json` unless the user explicitly asks to replace it.
 4. Keep `server.host` on `127.0.0.1` unless the user deliberately chooses another protected network boundary.
-5. Explain before first start that phone-created tasks currently use full filesystem/command access and no routine approvals.
+5. Explain before first start that the PWA can select the permission profiles advertised by Codex, and that the default remains full filesystem/command access.
 6. Do not install login startup, run `tailscale serve`, expose a port, or add a project without explicit user confirmation.
 7. Never read or reveal `data/state.json`, admin tokens, session tokens, WeChat secrets, private tailnet names, or unrelated task history. A newly generated one-time pairing code may be shown only to the requesting user.
 8. The one-time pairing code intentionally defaults to 7 days (`10080` minutes) and becomes invalid immediately after successful use. Do not shorten it unless the user asks.

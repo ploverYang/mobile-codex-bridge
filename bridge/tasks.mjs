@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { accessParams, executionCatalog, validateExecutionSelection } from "./task-options.mjs";
 
 const ACTIVE_STATUSES = new Set(["creating", "resuming", "running", "waiting_approval", "cancelling"]);
 const APPROVAL_METHODS = new Set([
@@ -6,15 +7,6 @@ const APPROVAL_METHODS = new Set([
   "item/fileChange/requestApproval",
   "item/permissions/requestApproval",
 ]);
-const MOBILE_THREAD_PERMISSIONS = {
-  approvalPolicy: "never",
-  sandbox: "danger-full-access",
-};
-const MOBILE_TURN_PERMISSIONS = {
-  approvalPolicy: "never",
-  sandboxPolicy: { type: "dangerFullAccess" },
-};
-
 function isMissingRollout(error) {
   return /no rollout found for thread id/i.test(String(error?.message || error));
 }
@@ -35,6 +27,9 @@ function publicTask(task) {
     error: task.error,
     archivedAt: task.archivedAt || null,
     archiveSync: task.archivedAt ? (task.archiveSync || "synced") : null,
+    accessLevel: task.accessLevel || ":danger-full-access",
+    model: task.model || null,
+    effort: task.effort || null,
     createdAt: task.createdAt,
     updatedAt: task.updatedAt,
     canFollowUp: Boolean(task.threadId) && !task.archivedAt && !ACTIVE_STATUSES.has(task.status),
@@ -240,6 +235,7 @@ export class TaskManager {
     this.approvals = new Map();
     this.persistTimer = null;
     this.persistQueue = Promise.resolve();
+    this.executionOptionsCache = new Map();
     client.on("notification", (message) => this.#onNotification(message));
     client.on("serverRequest", (message) => this.#onServerRequest(message));
     client.on("closed", (error) => this.#onClosed(error));
@@ -267,6 +263,23 @@ export class TaskManager {
   get(id) {
     const task = this.tasks.get(id);
     return task ? publicTask(task) : null;
+  }
+
+  async executionOptions({ refresh = false, cwd = null } = {}) {
+    const cacheKey = cwd || "<default>";
+    const cached = this.executionOptionsCache.get(cacheKey);
+    if (!refresh && cached && Date.now() < cached.expiresAt) return cached.value;
+    const [models, permissions] = await Promise.all([
+      this.client.request("model/list", { limit: 100 }),
+      this.client.request("permissionProfile/list", { limit: 100, ...(cwd ? { cwd } : {}) }),
+    ]);
+    const value = executionCatalog(models, permissions, this.config.codex.model);
+    this.executionOptionsCache.set(cacheKey, { value, expiresAt: Date.now() + 5 * 60_000 });
+    return value;
+  }
+
+  async #resolveExecutionSelection(selection, cwd) {
+    return validateExecutionSelection(selection, await this.executionOptions({ cwd }));
   }
 
   async getDetail(id) {
@@ -320,9 +333,12 @@ export class TaskManager {
     return publicTask(task);
   }
 
-  async createTask({ project, prompt, source = "pwa" }) {
+  async createTask({ project, prompt, source = "pwa", accessLevel, model, effort }) {
     const now = Date.now();
     const promptPreview = preview(prompt);
+    const execution = source === "pwa"
+      ? await this.#resolveExecutionSelection({ accessLevel, model, effort }, project.path)
+      : await this.#resolveExecutionSelection({ accessLevel: ":danger-full-access", model: this.config.codex.model, effort }, project.path);
     const task = {
       id: randomUUID(),
       threadId: null,
@@ -338,6 +354,7 @@ export class TaskManager {
       error: null,
       archivedAt: null,
       archiveSync: null,
+      ...execution,
       createdAt: now,
       updatedAt: now,
       approvals: [],
@@ -346,8 +363,8 @@ export class TaskManager {
     this.#changed(task);
 
     try {
-      const threadParams = { cwd: project.path, ...MOBILE_THREAD_PERMISSIONS };
-      if (this.config.codex.model) threadParams.model = this.config.codex.model;
+      const permissions = accessParams(task.accessLevel);
+      const threadParams = { cwd: project.path, model: task.model, ...permissions.thread };
       const threadResult = await this.client.request("thread/start", threadParams);
       task.threadId = threadResult?.thread?.id;
       if (!task.threadId) throw new Error("thread/start 未返回 thread.id");
@@ -357,7 +374,9 @@ export class TaskManager {
         threadId: task.threadId,
         input: [{ type: "text", text: prompt }],
         summary: "concise",
-        ...MOBILE_TURN_PERMISSIONS,
+        model: task.model,
+        effort: task.effort,
+        ...permissions.turn,
       });
       task.turnId = turnResult?.turn?.id || task.turnId;
       ensureLiveTurn(task, task.turnId, prompt);
@@ -375,13 +394,18 @@ export class TaskManager {
     }
   }
 
-  async followUp(taskId, prompt) {
+  async followUp(taskId, prompt, selection = {}) {
     const task = this.tasks.get(taskId);
     if (!task) throw new Error("任务不存在");
     if (!task.threadId) throw new Error("这个任务没有可继续的 Codex 线程");
     if (ACTIVE_STATUSES.has(task.status)) throw new Error("任务仍在执行，暂时不能继续发送");
     const project = this.config.projects.find((item) => item.id === task.projectId);
     if (!project) throw new Error(`项目已不在白名单中：${task.projectId}`);
+    const execution = await this.#resolveExecutionSelection({
+      accessLevel: selection.accessLevel || task.accessLevel,
+      model: selection.model || task.model,
+      effort: selection.effort || task.effort,
+    }, project.path);
 
     const previousStatus = task.status;
     task.status = "resuming";
@@ -393,19 +417,22 @@ export class TaskManager {
     this.#changed(task);
 
     try {
-      const resumeParams = { threadId: task.threadId, cwd: project.path, ...MOBILE_THREAD_PERMISSIONS };
-      if (this.config.codex.model) resumeParams.model = this.config.codex.model;
+      const permissions = accessParams(execution.accessLevel);
+      const resumeParams = { threadId: task.threadId, cwd: project.path, model: execution.model, ...permissions.thread };
       await this.client.request("thread/resume", resumeParams);
       this.threadToTask.set(task.threadId, task.id);
       const turnResult = await this.client.request("turn/start", {
         threadId: task.threadId,
         input: [{ type: "text", text: prompt }],
         summary: "concise",
-        ...MOBILE_TURN_PERMISSIONS,
+        model: execution.model,
+        effort: execution.effort,
+        ...permissions.turn,
       });
       task.turnId = turnResult?.turn?.id || task.turnId;
       ensureLiveTurn(task, task.turnId, prompt);
       task.promptPreview = preview(prompt);
+      Object.assign(task, execution);
       task.messageCount += 1;
       task.status = "running";
       this.#changed(task);

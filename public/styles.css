@@ -201,6 +201,10 @@ input { height: 56px; padding: 0 16px; }
 .select-wrap { position: relative; }
 .select-wrap select { height: 52px; padding: 0 44px 0 15px; appearance: none; }
 .select-wrap span { position: absolute; right: 17px; top: 14px; color: var(--acid); pointer-events: none; }
+.execution-options { display: grid; grid-template-columns: 0.9fr 1.35fr 0.85fr; gap: 8px; margin-top: 17px; }
+.execution-options label { min-width: 0; }
+.execution-options label > span { display: block; margin: 0 0 6px; color: var(--muted); font-size: 9px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; }
+.execution-options select { width: 100%; height: 40px; padding: 0 9px; border-color: rgba(232, 232, 220, 0.1); background: rgba(0, 0, 0, 0.18); font-size: 11px; }
 textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7; }
 .input-assist { display: flex; align-items: center; gap: 10px; margin-top: 11px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .input-assist strong { color: #c4c8ba; font-weight: 600; }
@@ -231,19 +235,19 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .empty-state { padding: 34px; border: 1px dashed var(--line); border-radius: 14px; color: var(--muted); }
 .empty-state span { color: var(--paper); font-family: STKaiti, KaiTi, serif; font-size: 24px; }
 .empty-state p { margin: 8px 0 0; font-size: 13px; line-height: 1.7; }
-.task-card { position: relative; display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; gap: 14px; padding: 18px; border: 1px solid var(--line); border-radius: 14px 14px 14px 3px; background: rgba(10, 12, 9, 0.48); }
+.task-card { position: relative; display: grid; grid-template-columns: 9px minmax(0, 1fr) auto auto; align-items: center; gap: 10px; min-height: 68px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 11px 11px 11px 3px; background: rgba(10, 12, 9, 0.48); }
 .task-card:hover { border-color: rgba(232, 232, 220, 0.24); background: rgba(16, 19, 14, 0.8); }
 .task-card-link { cursor: pointer; transition: border-color 160ms ease, background 160ms ease, transform 160ms ease; }
 .task-card-link:focus-visible { border-color: var(--acid); box-shadow: 0 0 0 3px rgba(184, 243, 74, 0.1); outline: none; }
 .task-card-link:active { transform: scale(0.995); }
-.task-card::before { content: ""; width: 8px; height: 8px; margin-top: 5px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 5px rgba(92, 225, 213, 0.08); }
+.task-card::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--signal); box-shadow: 0 0 0 4px rgba(92, 225, 213, 0.08); }
 .task-card[data-status="completed"]::before { background: var(--acid); }
 .task-card[data-status="failed"]::before, .task-card[data-status="cancelled"]::before { background: var(--danger); }
 .task-card[data-status="waiting_approval"]::before { background: var(--warm); animation: blink 1s infinite; }
 .task-card[data-status="interrupted"]::before { background: var(--warm); }
 .task-main { min-width: 0; }
-.task-main h3 { overflow: hidden; margin: 0; color: var(--paper); font-size: 14px; font-weight: 600; line-height: 1.55; text-overflow: ellipsis; white-space: nowrap; }
-.task-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 7px; color: var(--muted); font-size: 11px; }
+.task-main h3 { overflow: hidden; margin: 0; color: var(--paper); font-size: 13px; font-weight: 600; line-height: 1.4; text-overflow: ellipsis; white-space: nowrap; }
+.task-meta { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 4px; color: var(--muted); font-size: 9px; }
 .task-output { display: -webkit-box; overflow: hidden; margin: 13px 0 0; padding: 12px 14px; border-left: 2px solid var(--line); color: #b9bcae; background: rgba(0, 0, 0, 0.16); font-size: 12px; line-height: 1.65; white-space: pre-wrap; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
 .task-error { color: #ff9c96; }
 .status-pill { height: fit-content; padding: 6px 9px; border: 1px solid var(--line); border-radius: 99px; color: var(--muted); font-size: 10px; letter-spacing: 0.08em; }
@@ -254,7 +258,10 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .approval-actions button { flex: 1; padding: 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; cursor: pointer; font-size: 11px; }
 .approval-actions .approve { border-color: var(--acid); color: var(--acid); }
 .approval-actions .deny { border-color: var(--danger); color: var(--danger); }
-.task-actions { display: flex; flex-wrap: wrap; gap: 8px; grid-column: 2 / -1; padding-top: 4px; }
+.task-card-actions { display: flex; align-items: center; gap: 5px; }
+.task-icon-action { display: grid; width: 29px; height: 29px; place-items: center; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--muted); cursor: pointer; font-size: 13px; }
+.task-icon-action:hover { border-color: var(--signal); color: var(--signal); }
+.task-icon-action.danger-action:hover { border-color: var(--danger); color: var(--danger); }
 .task-action {
   padding: 9px 12px;
   border: 1px solid var(--line);
@@ -337,10 +344,12 @@ textarea { min-height: 164px; padding: 16px; resize: vertical; line-height: 1.7;
 .process-text, .process-output { overflow-x: auto; margin: 0; color: #aeb3a4; font: 11px/1.65 Consolas, "Microsoft YaHei UI", monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
 .process-output { max-height: 260px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: #858b7d; }
 .detail-controls { flex: 0 0 auto; padding: 12px 20px 8px; border-top: 1px solid var(--line); background: rgba(14, 16, 13, 0.97); }
+.detail-execution-options { margin: 0 0 9px; }
 .detail-quick-actions { display: flex; gap: 7px; margin-bottom: 8px; }
 .detail-quick-actions .task-action { padding: 7px 10px; font-size: 9px; }
 .detail-composer { display: grid; grid-template-columns: minmax(0, 1fr) 42px; align-items: end; gap: 8px; padding: 7px 7px 7px 13px; border: 1px solid rgba(232, 232, 220, 0.18); border-radius: 17px; background: rgba(7, 8, 7, 0.82); }
-.detail-composer textarea { min-height: 42px; max-height: 130px; padding: 10px 3px; border: 0; background: transparent; box-shadow: none; resize: none; font-size: 13px; }
+.detail-composer textarea { min-height: 42px; max-height: 160px; padding: 10px 3px; border: 0; background: transparent; box-shadow: none; resize: none; font-size: 13px; transition: min-height 180ms ease, box-shadow 180ms ease; }
+.detail-composer:focus-within textarea { min-height: 112px; box-shadow: 0 0 0 2px rgba(92, 225, 213, 0.08); }
 .detail-composer button { display: grid; width: 38px; height: 38px; place-items: center; border: 0; border-radius: 50%; background: var(--acid); color: var(--ink); cursor: pointer; font-size: 20px; font-weight: 900; }
 .detail-composer button:disabled { opacity: 0.45; cursor: wait; }
 .detail-hint { margin: 6px 3px 0; color: #656b5f; font-size: 9px; text-align: center; }
@@ -413,12 +422,13 @@ footer { display: flex; justify-content: space-between; margin-top: 80px; paddin
   .task-search { margin-bottom: 8px; }
   .task-list { padding-right: 2px; }
   .tasks-panel-footer { display: flex; flex: 0 0 auto; justify-content: space-between; margin-top: 9px; padding: 9px 2px 0; border-top: 1px solid var(--line); color: #5f6458; font: 9px/1 Consolas, monospace; letter-spacing: 0.12em; }
-  .task-card { grid-template-columns: 10px minmax(0, 1fr); }
-  .status-pill { grid-column: 2; grid-row: 2; justify-self: start; }
+  .execution-options { grid-template-columns: 0.9fr 1.2fr 0.8fr; gap: 6px; }
+  .execution-options select { height: 38px; padding: 0 6px; font-size: 10px; }
+  .task-card { grid-template-columns: 8px minmax(0, 1fr) auto auto; gap: 8px; min-height: 62px; padding: 9px 10px; }
+  .task-card .status-pill { grid-column: auto; grid-row: auto; justify-self: auto; }
+  .task-icon-action { width: 28px; height: 28px; }
   .approval-card { grid-column: 2; }
-  .task-actions { grid-column: 2; }
-  .followup-form { grid-template-columns: 1fr; }
-  .followup-send { min-height: 42px; }
+  .detail-composer:focus-within textarea { min-height: 132px; }
   footer { display: flex; margin-top: 12px; padding: 10px 3px 2px; border-top: 1px solid var(--line); }
 }
 

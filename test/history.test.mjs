@@ -24,6 +24,9 @@ test("task history is restored locally without persisted output", async () => {
       error: null,
       archivedAt: 300,
       archiveSync: "local",
+      accessLevel: ":workspace",
+      model: "gpt-test",
+      effort: "high",
       createdAt: 100,
       updatedAt: 200,
       approvals: [],
@@ -34,6 +37,9 @@ test("task history is restored locally without persisted output", async () => {
     assert.equal(restored.messageCount, 2);
     assert.equal(restored.archivedAt, 300);
     assert.equal(restored.archiveSync, "local");
+    assert.equal(restored.accessLevel, ":workspace");
+    assert.equal(restored.model, "gpt-test");
+    assert.equal(restored.effort, "high");
     assert.match(restored.error, /重启/);
   } finally {
     await rm(directory, { recursive: true, force: true });

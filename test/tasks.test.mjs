@@ -14,6 +14,29 @@ class FakeClient extends EventEmitter {
 
   async request(method, params) {
     this.calls.push({ method, params });
+    if (method === "model/list") return {
+      data: [
+        {
+          model: "gpt-test",
+          displayName: "GPT Test",
+          isDefault: true,
+          hidden: false,
+          defaultReasoningEffort: "medium",
+          supportedReasoningEfforts: [
+            { reasoningEffort: "low", description: "Fast" },
+            { reasoningEffort: "medium", description: "Balanced" },
+            { reasoningEffort: "high", description: "Deep" },
+          ],
+        },
+      ],
+    };
+    if (method === "permissionProfile/list") return {
+      data: [
+        { id: ":read-only", allowed: true },
+        { id: ":workspace", allowed: true },
+        { id: ":danger-full-access", allowed: true },
+      ],
+    };
     if (method === "thread/start") return { thread: { id: "thread-1" } };
     if (method === "thread/resume") return { thread: { id: "thread-1" } };
     if (method === "thread/read") {
@@ -66,13 +89,21 @@ test("task manager starts a Codex thread and turn, streams output, and routes ap
     project: { id: "demo", name: "Demo", path: "C:/demo" },
     prompt: "Inspect the repository",
     source: "pwa",
+    accessLevel: ":workspace",
+    model: "gpt-test",
+    effort: "high",
   });
 
   assert.deepEqual(client.calls, [
-    { method: "thread/start", params: { cwd: "C:/demo", approvalPolicy: "never", sandbox: "danger-full-access" } },
-    { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "Inspect the repository" }], summary: "concise", approvalPolicy: "never", sandboxPolicy: { type: "dangerFullAccess" } } },
+    { method: "model/list", params: { limit: 100 } },
+    { method: "permissionProfile/list", params: { limit: 100, cwd: "C:/demo" } },
+    { method: "thread/start", params: { cwd: "C:/demo", model: "gpt-test", permissions: ":workspace" } },
+    { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "Inspect the repository" }], summary: "concise", model: "gpt-test", effort: "high", permissions: ":workspace" } },
   ]);
   assert.equal(task.status, "creating");
+  assert.equal(task.accessLevel, ":workspace");
+  assert.equal(task.model, "gpt-test");
+  assert.equal(task.effort, "high");
 
   client.emit("notification", {
     method: "turn/started",
@@ -104,13 +135,19 @@ test("task manager starts a Codex thread and turn, streams output, and routes ap
   current = manager.get(task.id);
   assert.equal(current.status, "completed");
 
-  const continued = await manager.followUp(task.id, "Now run the tests");
+  const continued = await manager.followUp(task.id, "Now run the tests", {
+    accessLevel: ":read-only",
+    model: "gpt-test",
+    effort: "low",
+  });
   assert.equal(continued.messageCount, 2);
   assert.equal(continued.promptPreview, "Now run the tests");
   assert.deepEqual(client.calls.slice(-2), [
-    { method: "thread/resume", params: { threadId: "thread-1", cwd: "C:/demo", approvalPolicy: "never", sandbox: "danger-full-access" } },
-    { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "Now run the tests" }], summary: "concise", approvalPolicy: "never", sandboxPolicy: { type: "dangerFullAccess" } } },
+    { method: "thread/resume", params: { threadId: "thread-1", cwd: "C:/demo", model: "gpt-test", permissions: ":read-only" } },
+    { method: "turn/start", params: { threadId: "thread-1", input: [{ type: "text", text: "Now run the tests" }], summary: "concise", model: "gpt-test", effort: "low", permissions: ":read-only" } },
   ]);
+  assert.equal(continued.accessLevel, ":read-only");
+  assert.equal(continued.effort, "low");
 
   const detail = await manager.getDetail(task.id);
   assert.equal(detail.turns.length, 2);

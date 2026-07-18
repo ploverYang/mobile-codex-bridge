@@ -98,6 +98,12 @@
                 <span aria-hidden="true">⌄</span>
               </div>
 
+              <div class="execution-options" aria-label="Codex 执行配置">
+                <label><span>访问等级</span><select id="compose-access"></select></label>
+                <label><span>模型</span><select id="compose-model"></select></label>
+                <label><span>推理深度</span><select id="compose-effort"></select></label>
+              </div>
+
               <label class="field-label" for="prompt">任务描述</label>
               <textarea
                 id="prompt"
@@ -111,7 +117,7 @@
                 <span class="keyboard-mark" aria-hidden="true">⌨</span>
                 <span>需要语音时，点击输入框后使用<strong>系统键盘麦克风</strong></span>
               </div>
-              <p class="access-notice">本手机入口创建和续聊的任务默认完全访问电脑端项目与命令执行权限。</p>
+              <p class="access-notice" id="compose-access-description"></p>
 
               <button class="primary-action launch" id="submit-task" type="submit">
                 <span>发送到电脑 Codex</span><b aria-hidden="true">→</b>
@@ -178,6 +184,11 @@
             </div>
 
             <div class="detail-controls">
+              <div class="execution-options detail-execution-options" aria-label="本轮 Codex 执行配置">
+                <label><span>访问</span><select id="detail-access"></select></label>
+                <label><span>模型</span><select id="detail-model"></select></label>
+                <label><span>推理</span><select id="detail-effort"></select></label>
+              </div>
               <div class="detail-quick-actions">
                 <button class="task-action" id="detail-open-desktop" type="button">电脑端打开</button>
                 <button class="task-action danger-action" id="detail-cancel" type="button" hidden>停止任务</button>

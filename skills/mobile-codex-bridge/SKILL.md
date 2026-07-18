@@ -13,7 +13,7 @@ This plugin packages a local bridge daemon and phone PWA. The daemon uses the of
 - Prefer private HTTPS exposure through Tailscale Serve. Never expose the App Server itself to the public internet.
 - Treat every pairing code like a short-lived password. Never print or reveal `data/state.json` or its admin token.
 - Only offer project ids declared in `config.local.json`; do not accept arbitrary phone-supplied paths.
-- Phone-created and resumed tasks currently request `danger-full-access` with routine approvals disabled. Explain this before first use and do not claim the bridge is sandboxed.
+- Phone-created and resumed tasks can select the permission profiles advertised by the local Codex App Server; the default remains full access. Explain this before first use and do not claim full access is sandboxed.
 - Keep `storage.persistOutputs` false unless the user explicitly accepts storing agent output in local bridge history.
 - For a public WeChat callback, expose only `/wechat/callback` through the reverse proxy. The MVP supports plaintext callback mode, not AES safe mode.
 

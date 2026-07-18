@@ -275,6 +275,11 @@ export async function startBridge({ configPath } = {}) {
         sendJson(response, 200, { projects: projectPublicView(config) });
         return;
       }
+      if (pathname === "/api/execution-options" && request.method === "GET") {
+        const project = config.projects.find((item) => item.id === url.searchParams.get("projectId")) || config.projects[0];
+        sendJson(response, 200, await tasks.executionOptions({ cwd: project?.path || null }));
+        return;
+      }
       if (pathname === "/api/tasks" && request.method === "GET") {
         sendJson(response, 200, { tasks: tasks.list({ archived: url.searchParams.get("archived") === "true" }) });
         return;
@@ -296,7 +301,14 @@ export async function startBridge({ configPath } = {}) {
         if (!project) throw new Error("请选择有效项目");
         if (!prompt) throw new Error("任务描述不能为空");
         if (prompt.length > config.security.maxPromptChars) throw new Error("任务描述超过长度限制");
-        const task = await tasks.createTask({ project, prompt, source: "pwa" });
+        const task = await tasks.createTask({
+          project,
+          prompt,
+          source: "pwa",
+          accessLevel: body.accessLevel,
+          model: body.model,
+          effort: body.effort,
+        });
         sendJson(response, 201, { task });
         return;
       }
@@ -327,7 +339,11 @@ export async function startBridge({ configPath } = {}) {
         const prompt = String(body.prompt || "").trim();
         if (!prompt) throw new Error("后续指令不能为空");
         if (prompt.length > config.security.maxPromptChars) throw new Error("后续指令超过长度限制");
-        const task = await tasks.followUp(taskId, prompt);
+        const task = await tasks.followUp(taskId, prompt, {
+          accessLevel: body.accessLevel,
+          model: body.model,
+          effort: body.effort,
+        });
         sendJson(response, 201, { task });
         return;
       }
