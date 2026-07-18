@@ -34,3 +34,22 @@ export class TaskRefreshGate {
     return request === this.#latestRequest;
   }
 }
+
+export class DetailRefreshGate {
+  #controller = null;
+
+  begin({ force = false } = {}) {
+    if (this.#controller && !force) return null;
+    this.#controller?.abort();
+    this.#controller = new AbortController();
+    return this.#controller;
+  }
+
+  isCurrent(controller) {
+    return controller === this.#controller;
+  }
+
+  finish(controller) {
+    if (this.isCurrent(controller)) this.#controller = null;
+  }
+}

@@ -198,6 +198,27 @@ test("task detail hides the transient empty-rollout error while a turn is starti
   assert.equal(detail.turns[0].items[0].text, "Start a task");
 });
 
+test("task detail reconciles a missed completion notification from persisted thread history", async () => {
+  const client = new FakeClient();
+  const manager = new TaskManager(client, {
+    codex: { model: null },
+    projects: [{ id: "demo", name: "Demo", path: "C:/demo" }],
+    storage: { maxTasks: 100 },
+  });
+  const task = await manager.createTask({
+    project: { id: "demo", name: "Demo", path: "C:/demo" },
+    prompt: "Finish while the phone is offline",
+  });
+  assert.equal(manager.get(task.id).status, "creating");
+
+  const detail = await manager.getDetail(task.id);
+
+  assert.equal(detail.status, "completed");
+  assert.equal(manager.get(task.id).status, "completed");
+  assert.equal(detail.turns[0].status, "completed");
+  assert.equal(detail.turns[0].items.find((item) => item.type === "assistant").text, "Working");
+});
+
 test("task detail shows an identical completed assistant response only once", async () => {
   const client = new FakeClient();
   client.threadTurns = [{

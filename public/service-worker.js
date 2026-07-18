@@ -1,4 +1,4 @@
-const CACHE = "mobile-codex-bridge-v0.19.1";
+const CACHE = "mobile-codex-bridge-v0.19.2";
 const SHELL = ["/", "/styles.css", "/app.js", "/task-list-state.mjs", "/manifest.webmanifest", "/icon.svg"];
 
 self.addEventListener("install", (event) => {

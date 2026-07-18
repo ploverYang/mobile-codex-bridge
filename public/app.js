@@ -1,4 +1,4 @@
-import { ACTIVE_STATUSES, shouldRefreshTaskList, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
+import { ACTIVE_STATUSES, DetailRefreshGate, shouldRefreshTaskList, TaskRefreshGate, taskMatchesFilter } from "./task-list-state.mjs";
 
 const $ = (selector) => document.querySelector(selector);
 const state = {
@@ -9,8 +9,8 @@ const state = {
   taskQuery: "",
   activeTaskId: null,
   activeView: "compose",
-  detailRefreshing: false,
   detailFirstRender: true,
+  detailRefreshGate: new DetailRefreshGate(),
   installPrompt: null,
   taskRefreshGate: new TaskRefreshGate(),
 };
@@ -440,16 +440,35 @@ function renderTaskDetail(task) {
   state.detailFirstRender = false;
 }
 
-async function refreshTaskDetail() {
-  if (!state.activeTaskId || document.hidden || state.detailRefreshing) return;
-  state.detailRefreshing = true;
+function showDetailRefreshWarning(text) {
+  const conversation = $("#detail-conversation");
+  let warning = conversation.querySelector("[data-refresh-warning]");
+  if (!warning) {
+    warning = element("div", "detail-warning");
+    warning.dataset.refreshWarning = "true";
+    conversation.prepend(warning);
+  }
+  warning.textContent = text;
+}
+
+async function refreshTaskDetail({ force = false } = {}) {
+  if (!state.activeTaskId || document.hidden) return;
+  const controller = state.detailRefreshGate.begin({ force });
+  if (!controller) return;
+  const timeout = window.setTimeout(() => controller.abort(), 20_000);
   try {
-    const { task } = await api(`/api/tasks/${encodeURIComponent(state.activeTaskId)}`);
+    const { task } = await api(`/api/tasks/${encodeURIComponent(state.activeTaskId)}`, { signal: controller.signal });
+    if (!state.detailRefreshGate.isCurrent(controller)) return;
     renderTaskDetail(task);
   } catch (error) {
-    $("#detail-conversation").replaceChildren(element("div", "detail-warning", error.message));
+    if (!state.detailRefreshGate.isCurrent(controller)) return;
+    const messageText = controller.signal.aborted
+      ? "读取会话超时，已保留当前内容；正在等待下次自动重试。"
+      : error.message;
+    showDetailRefreshWarning(messageText);
   } finally {
-    state.detailRefreshing = false;
+    window.clearTimeout(timeout);
+    state.detailRefreshGate.finish(controller);
   }
 }
 
@@ -463,7 +482,7 @@ async function openTaskDetail(taskId) {
     $("#detail-conversation").replaceChildren(loading);
   }
   setTaskView("detail");
-  await refreshTaskDetail();
+  await refreshTaskDetail({ force: true });
 }
 
 async function refreshTasks() {
@@ -624,7 +643,7 @@ $("#task-form").addEventListener("submit", submitTask);
 $("#logout").addEventListener("click", logout);
 $("#refresh-tasks").addEventListener("click", refreshTasks);
 $("#new-task-button").addEventListener("click", startNewTask);
-$("#refresh-detail").addEventListener("click", refreshTaskDetail);
+$("#refresh-detail").addEventListener("click", () => refreshTaskDetail({ force: true }));
 $("#detail-open-desktop").addEventListener("click", (event) => openOnDesktop(state.activeTaskId, event.currentTarget));
 $("#detail-cancel").addEventListener("click", (event) => cancelTask(state.activeTaskId, event.currentTarget));
 $("#detail-archive").addEventListener("click", (event) => setTaskArchived(state.activeTaskId, event.currentTarget.dataset.unarchive === "true", event.currentTarget));
@@ -653,7 +672,7 @@ document.querySelectorAll("[data-view-target]").forEach((button) => button.addEv
 document.addEventListener("visibilitychange", () => {
   if (document.hidden) return;
   checkHealth();
-  if (state.activeView === "detail") refreshTaskDetail();
+  if (state.activeView === "detail") refreshTaskDetail({ force: true });
   else refreshTasks();
 });
 

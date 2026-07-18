@@ -71,6 +71,14 @@ function statusName(status) {
   return value;
 }
 
+function completedTaskStatus(turnStatus) {
+  const status = statusName(turnStatus);
+  if (ACTIVE_STATUSES.has(status) || status === "creating") return null;
+  if (/fail|error/i.test(status)) return "failed";
+  if (/cancel|interrupt/i.test(status)) return "cancelled";
+  return status === "completed" ? "completed" : null;
+}
+
 function preview(prompt) {
   return prompt.replace(/\s+/g, " ").slice(0, 180);
 }
@@ -270,8 +278,25 @@ export class TaskManager {
     if (task.threadId) {
       try {
         const result = await this.client.request("thread/read", { threadId: task.threadId, includeTurns: true }, 60_000);
-        historyTurns = (result?.thread?.turns || []).map(publicTurn);
+        const persistedTurns = result?.thread?.turns || [];
+        historyTurns = persistedTurns.map(publicTurn);
         threadPreview = result?.thread?.preview || threadPreview;
+        const persistedCurrentTurn = persistedTurns.find((turn) => turn.id === task.turnId);
+        const reconciledStatus = persistedCurrentTurn ? completedTaskStatus(persistedCurrentTurn.status) : null;
+        if (reconciledStatus && ACTIVE_STATUSES.has(task.status)) {
+          task.status = reconciledStatus;
+          if (reconciledStatus === "failed") task.error ||= persistedCurrentTurn.error?.message || "Codex 任务执行失败";
+          const liveTurn = runtimeTurns(task).get(task.turnId);
+          if (liveTurn) {
+            liveTurn.status = statusName(persistedCurrentTurn.status);
+            liveTurn.completedAt = persistedCurrentTurn.completedAt || liveTurn.completedAt;
+            liveTurn.durationMs = persistedCurrentTurn.durationMs ?? liveTurn.durationMs;
+            if (Array.isArray(persistedCurrentTurn.items)) {
+              liveTurn.items = persistedCurrentTurn.items.map((item) => structuredClone(item));
+            }
+          }
+          this.#changed(task);
+        }
       } catch (error) {
         const rolloutIsStillEmpty = ACTIVE_STATUSES.has(task.status) && /rollout.+(?:is empty|empty$)/i.test(error.message);
         if (!rolloutIsStillEmpty) detailError = `暂时无法读取 Codex 完整历史：${error.message}`;

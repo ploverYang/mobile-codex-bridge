@@ -101,6 +101,11 @@ class RateLimiter {
   }
 }
 
+export function requestLimitClass(method, pathname) {
+  if (pathname === "/api/health") return "none";
+  return String(method || "GET").toUpperCase() === "GET" ? "read" : "write";
+}
+
 function projectPublicView(config) {
   return config.projects.map(({ id, name }) => ({ id, name }));
 }
@@ -123,7 +128,8 @@ export async function startBridge({ configPath } = {}) {
     : null;
   const desktop = new DesktopIntegration(config.desktop);
   const tasks = await new TaskManager(codex, config, historyStore, desktop).init();
-  const limiter = new RateLimiter(config.security.rateLimitPerMinute);
+  const writeLimiter = new RateLimiter(config.security.rateLimitPerMinute);
+  const readLimiter = new RateLimiter(Math.max(120, config.security.rateLimitPerMinute * 6));
   const seenWechatMessages = new Set();
 
   let closing = false;
@@ -143,9 +149,13 @@ export async function startBridge({ configPath } = {}) {
       const pathname = decodeURIComponent(url.pathname);
       const clientKey = request.socket.remoteAddress || "unknown";
 
-      if (pathname.startsWith("/api/") && !limiter.allow(clientKey)) {
-        sendJson(response, 429, { error: "请求过于频繁，请稍后再试" });
-        return;
+      if (pathname.startsWith("/api/")) {
+        const limitClass = requestLimitClass(request.method, pathname);
+        const limiter = limitClass === "read" ? readLimiter : limitClass === "write" ? writeLimiter : null;
+        if (limiter && !limiter.allow(clientKey)) {
+          sendJson(response, 429, { error: "请求过于频繁，请稍后再试" }, { "Retry-After": "5" });
+          return;
+        }
       }
       if (["POST", "PUT", "PATCH", "DELETE"].includes(request.method || "") && !sameOrigin(request)) {
         sendJson(response, 403, { error: "Origin 校验失败" });
