@@ -128,8 +128,9 @@
                 <h2 id="tasks-heading">最近任务</h2>
               </div>
               <div class="tasks-summary">
+                <span class="refresh-feedback" id="tasks-refresh-feedback" role="status" aria-live="polite"></span>
                 <span id="task-count">0 条</span>
-                <button class="icon-button refresh" id="refresh-tasks" type="button" title="刷新任务" aria-label="刷新任务">↻</button>
+                <button class="icon-button refresh" id="refresh-tasks" type="button" title="刷新任务内容和状态" aria-label="刷新任务内容和状态">↻</button>
               </div>
             </div>
             <div class="task-tools">
@@ -166,9 +167,10 @@
                 <div class="detail-meta">
                   <span class="status-pill" id="detail-status">读取中</span>
                   <span id="detail-turn-count"></span>
+                  <span class="refresh-feedback" id="detail-refresh-feedback" role="status" aria-live="polite"></span>
                 </div>
               </div>
-              <button class="icon-button detail-refresh" id="refresh-detail" type="button" aria-label="刷新任务详情">↻</button>
+              <button class="icon-button detail-refresh" id="refresh-detail" type="button" title="刷新任务内容和状态" aria-label="刷新任务内容和状态">↻</button>
             </header>
 
             <div class="detail-conversation" id="detail-conversation" aria-live="polite">

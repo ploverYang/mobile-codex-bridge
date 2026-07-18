@@ -11,6 +11,7 @@ const state = {
   activeView: "compose",
   detailFirstRender: true,
   detailRefreshGate: new DetailRefreshGate(),
+  refreshFeedbackTimers: new Map(),
   installPrompt: null,
   taskRefreshGate: new TaskRefreshGate(),
 };
@@ -31,7 +32,7 @@ async function api(path, options = {}) {
   const headers = new Headers(options.headers || {});
   if (state.token) headers.set("Authorization", `Bearer ${state.token}`);
   if (options.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
-  const response = await fetch(path, { ...options, headers, credentials: "same-origin" });
+  const response = await fetch(path, { cache: "no-store", ...options, headers, credentials: "same-origin" });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     if (response.status === 401 && path !== "/api/pair") clearSession(false);
@@ -59,12 +60,51 @@ async function checkHealth() {
       element.textContent = health.version ? `v${health.version}` : "v—";
     });
     setConnection(Boolean(health.codexReady), health.codexReady ? "电脑在线" : "Codex 未连接");
+    return Boolean(health.codexReady);
   } catch {
     document.querySelectorAll(".app-version").forEach((element) => {
       element.textContent = "v—";
     });
     setConnection(false, "电脑离线");
+    return false;
   }
+}
+
+function setRefreshFeedback(scope, status, text) {
+  const button = $(`#refresh-${scope}`);
+  const feedback = $(`#${scope}-refresh-feedback`);
+  window.clearTimeout(state.refreshFeedbackTimers.get(scope));
+  state.refreshFeedbackTimers.delete(scope);
+  button.dataset.refreshState = status;
+  button.disabled = status === "loading";
+  button.textContent = status === "success" ? "✓" : status === "error" ? "!" : "↻";
+  button.setAttribute("aria-label", status === "loading" ? "正在刷新" : "刷新任务内容和状态");
+  button.title = status === "loading" ? "正在刷新…" : text || "刷新任务内容和状态";
+  feedback.textContent = text;
+  feedback.dataset.refreshState = status;
+  if (status === "success" || status === "error") {
+    state.refreshFeedbackTimers.set(scope, window.setTimeout(() => {
+      button.dataset.refreshState = "idle";
+      button.textContent = "↻";
+      state.refreshFeedbackTimers.delete(scope);
+    }, 1_600));
+  }
+}
+
+async function manualRefresh(scope) {
+  const detail = scope === "detail";
+  setRefreshFeedback(scope, "loading", "正在同步内容和状态…");
+  const results = await Promise.all([
+    checkHealth(),
+    refreshTasks({ force: true }),
+    ...(detail ? [refreshTaskDetail({ force: true })] : []),
+  ]);
+  const succeeded = results.every(Boolean);
+  setRefreshFeedback(
+    scope,
+    succeeded ? "success" : "error",
+    succeeded ? "刚刚已同步" : "刷新未完成，请检查电脑连接后重试",
+  );
 }
 
 async function pair(event) {
@@ -452,20 +492,22 @@ function showDetailRefreshWarning(text) {
 }
 
 async function refreshTaskDetail({ force = false } = {}) {
-  if (!state.activeTaskId || document.hidden) return;
+  if (!state.activeTaskId || document.hidden) return false;
   const controller = state.detailRefreshGate.begin({ force });
-  if (!controller) return;
+  if (!controller) return false;
   const timeout = window.setTimeout(() => controller.abort(), 20_000);
   try {
     const { task } = await api(`/api/tasks/${encodeURIComponent(state.activeTaskId)}`, { signal: controller.signal });
     if (!state.detailRefreshGate.isCurrent(controller)) return;
     renderTaskDetail(task);
+    return true;
   } catch (error) {
     if (!state.detailRefreshGate.isCurrent(controller)) return;
     const messageText = controller.signal.aborted
       ? "读取会话超时，已保留当前内容；正在等待下次自动重试。"
       : error.message;
     showDetailRefreshWarning(messageText);
+    return false;
   } finally {
     window.clearTimeout(timeout);
     state.detailRefreshGate.finish(controller);
@@ -485,21 +527,23 @@ async function openTaskDetail(taskId) {
   await refreshTaskDetail({ force: true });
 }
 
-async function refreshTasks() {
-  if (!shouldRefreshTaskList({
+async function refreshTasks({ force = false } = {}) {
+  if (!force && !shouldRefreshTaskList({
     appVisible: !$("#app-panel").hidden,
     documentHidden: document.hidden,
     followupFocused: Boolean(document.activeElement?.closest?.(".followup-form")),
-  })) return;
+  })) return false;
   const refreshRequest = state.taskRefreshGate.begin();
   try {
     const result = await api(state.taskFilter === "archived" ? "/api/tasks?archived=true" : "/api/tasks");
     if (!state.taskRefreshGate.isCurrent(refreshRequest)) return;
     state.tasks = result.tasks;
     renderTasks();
+    return true;
   } catch (error) {
     if (!state.taskRefreshGate.isCurrent(refreshRequest)) return;
     message($("#task-message"), error.message);
+    return false;
   }
 }
 
@@ -641,9 +685,9 @@ $("#pair-code").addEventListener("input", (event) => {
 $("#pair-form").addEventListener("submit", pair);
 $("#task-form").addEventListener("submit", submitTask);
 $("#logout").addEventListener("click", logout);
-$("#refresh-tasks").addEventListener("click", refreshTasks);
+$("#refresh-tasks").addEventListener("click", () => manualRefresh("tasks"));
 $("#new-task-button").addEventListener("click", startNewTask);
-$("#refresh-detail").addEventListener("click", () => refreshTaskDetail({ force: true }));
+$("#refresh-detail").addEventListener("click", () => manualRefresh("detail"));
 $("#detail-open-desktop").addEventListener("click", (event) => openOnDesktop(state.activeTaskId, event.currentTarget));
 $("#detail-cancel").addEventListener("click", (event) => cancelTask(state.activeTaskId, event.currentTarget));
 $("#detail-archive").addEventListener("click", (event) => setTaskArchived(state.activeTaskId, event.currentTarget.dataset.unarchive === "true", event.currentTarget));
