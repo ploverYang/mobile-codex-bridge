@@ -7,7 +7,7 @@
     <meta name="description" content="从配对手机创建本机 Codex 任务" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="/styles.css?v=0.23.0" />
     <title>手机遥控 Codex</title>
   </head>
   <body>
@@ -27,9 +27,6 @@
           <button type="button" data-view-target="tasks" aria-label="打开任务历史">
             <span class="history-glyph" aria-hidden="true"><i></i><i></i><i></i></span>
             <small id="active-task-count" hidden></small>
-          </button>
-          <button type="button" id="new-task-button" aria-label="开始新任务" title="开始新任务">
-            <span aria-hidden="true">＋</span>
           </button>
         </div>
       </header>
@@ -67,16 +64,8 @@
       <section id="app-panel" hidden>
         <section class="status-dock panel" aria-label="连接概况">
           <div class="status-item">
-            <span class="status-icon phone-icon" aria-hidden="true"></span>
-            <div><small>这台手机</small><strong>已安全配对</strong></div>
-          </div>
-          <div class="status-item">
-            <span class="status-icon computer-icon" aria-hidden="true"></span>
-            <div><small>电脑端</small><strong id="codex-state">Codex 在线</strong></div>
-          </div>
-          <div class="status-route">
-            <span class="route-line" aria-hidden="true"></span>
-            <small>PRIVATE RELAY</small>
+            <span class="paired-dot" aria-hidden="true"></span>
+            <strong>已安全配对</strong>
           </div>
           <button class="text-button logout-button" id="logout" type="button">解除配对</button>
         </section>
@@ -98,26 +87,26 @@
                 <span aria-hidden="true">⌄</span>
               </div>
 
+              <label class="field-label" for="prompt">任务描述</label>
+              <div class="prompt-field">
+                <textarea
+                  id="prompt"
+                  rows="7"
+                  maxlength="12000"
+                  placeholder="例如：检查支付模块最近的改动，修复测试失败并说明原因。"
+                  required
+                ></textarea>
+                <div class="input-assist">
+                  <span class="keyboard-mark" aria-hidden="true">⌨</span>
+                  <span>需要语音时，使用<strong>系统键盘麦克风</strong></span>
+                </div>
+              </div>
+
               <div class="execution-options" aria-label="Codex 执行配置">
                 <label><span>访问等级</span><select id="compose-access"></select></label>
                 <label><span>模型</span><select id="compose-model"></select></label>
                 <label><span>推理深度</span><select id="compose-effort"></select></label>
               </div>
-
-              <label class="field-label" for="prompt">任务描述</label>
-              <textarea
-                id="prompt"
-                rows="7"
-                maxlength="12000"
-                placeholder="例如：检查支付模块最近的改动，修复测试失败并说明原因。"
-                required
-              ></textarea>
-
-              <div class="input-assist">
-                <span class="keyboard-mark" aria-hidden="true">⌨</span>
-                <span>需要语音时，点击输入框后使用<strong>系统键盘麦克风</strong></span>
-              </div>
-              <p class="access-notice" id="compose-access-description"></p>
 
               <button class="primary-action launch" id="submit-task" type="submit">
                 <span>发送到电脑 Codex</span><b aria-hidden="true">→</b>
@@ -205,6 +194,6 @@
         <span class="app-version">v—</span>
       </footer>
     </main>
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="/app.js?v=0.23.0"></script>
   </body>
 </html>

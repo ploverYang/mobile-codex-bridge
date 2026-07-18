@@ -47,8 +47,6 @@ async function api(path, options = {}) {
 function setConnection(ok, label) {
   $("#connection-state").classList.toggle("online", ok);
   $("#connection-label").textContent = label;
-  $("#codex-state").textContent = ok ? "Codex 在线" : "Codex 离线";
-  $("#codex-state").closest(".status-item").classList.toggle("offline", !ok);
 }
 
 function message(element, text, success = false) {
@@ -171,7 +169,7 @@ function updateEffortControl(scope, selectedEffort) {
 function updateAccessDescription(scope) {
   if (scope !== "compose") return;
   const selected = state.executionOptions.accessLevels.find((item) => item.id === $("#compose-access").value);
-  $("#compose-access-description").textContent = selected?.description || "";
+  $("#compose-access").title = selected?.description || "";
 }
 
 function setExecutionSelection(scope, selection = {}) {
@@ -701,18 +699,6 @@ function setTaskView(view) {
   if (mobile) window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-function startNewTask() {
-  setTaskView("compose");
-  const composer = document.querySelector('[data-view="compose"]');
-  composer.classList.remove("composer-attention");
-  void composer.offsetWidth;
-  composer.classList.add("composer-attention");
-  window.setTimeout(() => {
-    $("#prompt").focus({ preventScroll: true });
-    composer.classList.remove("composer-attention");
-  }, 180);
-}
-
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   state.installPrompt = event;
@@ -739,7 +725,6 @@ $("#project-select").addEventListener("change", async () => {
 });
 $("#logout").addEventListener("click", logout);
 $("#refresh-tasks").addEventListener("click", () => manualRefresh("tasks"));
-$("#new-task-button").addEventListener("click", startNewTask);
 $("#refresh-detail").addEventListener("click", () => manualRefresh("detail"));
 $("#detail-open-desktop").addEventListener("click", (event) => openOnDesktop(state.activeTaskId, event.currentTarget));
 $("#detail-cancel").addEventListener("click", (event) => cancelTask(state.activeTaskId, event.currentTarget));
